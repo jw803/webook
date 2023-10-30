@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/jw803/webook/internal/domain"
 	"github.com/jw803/webook/internal/repository"
-	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,14 +27,6 @@ type userService struct {
 func NewUserService(repo repository.UserRepository) UserService {
 	return &userService{
 		repo: repo,
-	}
-}
-
-func NewUserServiceV1(repo repository.UserRepository, l *zap.Logger) UserService {
-	return &userService{
-		repo: repo,
-		// 预留了变化空间
-		//logger: zap.L(),
 	}
 }
 

@@ -7,6 +7,8 @@ import (
 	"github.com/jw803/webook/pkg/ratelimit"
 )
 
+// 可以只裝飾部分方法
+// 用戶可以直接訪問Service並繞開裝飾器
 type RatelimitSMSServiceV1 struct {
 	sms.Service
 	limiter ratelimit.Limiter

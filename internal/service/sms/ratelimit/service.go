@@ -9,6 +9,8 @@ import (
 
 var errLimited = fmt.Errorf("触发了限流")
 
+// 必須裝飾所有方法
+// 可以避免用戶繞開裝飾氣
 type RatelimitSMSService struct {
 	svc     sms.Service
 	limiter ratelimit.Limiter

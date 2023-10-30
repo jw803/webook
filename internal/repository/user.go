@@ -87,7 +87,7 @@ func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.U
 	//if err != nil {
 	// 我这里怎么办？
 	// 打日志，做监控
-	//return domain.User{}, err
+	//return domain.Users{}, err
 	//}
 
 	go func() {
@@ -112,8 +112,8 @@ func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.U
 
 }
 
-func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
-	return dao.User{
+func (r *CachedUserRepository) domainToEntity(u domain.User) dao.Users {
+	return dao.Users{
 		Id: u.Id,
 		Email: sql.NullString{
 			String: u.Email,
@@ -137,7 +137,7 @@ func (r *CachedUserRepository) domainToEntity(u domain.User) dao.User {
 	}
 }
 
-func (r *CachedUserRepository) entityToDomain(u dao.User) domain.User {
+func (r *CachedUserRepository) entityToDomain(u dao.Users) domain.User {
 	return domain.User{
 		Id:       u.Id,
 		Email:    u.Email.String,
