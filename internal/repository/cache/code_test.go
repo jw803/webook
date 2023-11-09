@@ -100,7 +100,7 @@ func TestRedisCodeCache_Set(t *testing.T) {
 			defer ctrl.Finish()
 
 			redisMock := tc.mock(ctrl)
-			codeCache := NewCodeCache(redisMock)
+			codeCache := NewRedisCodeCache(redisMock)
 			err := codeCache.Set(tc.ctx, tc.biz, tc.phone, tc.code)
 
 			assert.Equal(t, tc.wantErr, err)

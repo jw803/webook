@@ -120,7 +120,7 @@ func Test_UserRepository_FindById(t *testing.T) {
 			defer ctrl.Finish()
 
 			ud, uc := tc.mock(ctrl)
-			ur := NewUserRepository(ud, uc)
+			ur := NewCachedUserRepository(ud, uc)
 
 			u, err := ur.FindById(tc.ctx, tc.id)
 

@@ -38,7 +38,7 @@ func NewCodeCacheGoBestPractice(client redis.Cmdable) *RedisCodeCache {
 	}
 }
 
-func NewCodeCache(client redis.Cmdable) CodeCache {
+func NewRedisCodeCache(client redis.Cmdable) CodeCache {
 	return &RedisCodeCache{
 		client: client,
 	}

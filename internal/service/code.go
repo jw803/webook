@@ -30,7 +30,7 @@ type codeService struct {
 	//tplId string
 }
 
-func NewCodeService(repo repository.CodeRepository, smsSvc sms.Service) CodeService {
+func NewSMSCodeService(repo repository.CodeRepository, smsSvc sms.Service) CodeService {
 	codeTplId.Store("1877556")
 	//viper.OnConfigChange(func(in fsnotify.Event) {
 	//	codeTplId.Store(viper.GetString("code.tpl.id"))

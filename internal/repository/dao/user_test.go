@@ -79,7 +79,7 @@ func TestGORMUserDAO_Insert(t *testing.T) {
 				DisableAutomaticPing:   true,
 				SkipDefaultTransaction: true,
 			})
-			d := NewUserDAO(db)
+			d := NewGORMUserDAO(db)
 			err = d.Insert(tc.ctx, tc.user)
 			assert.Equal(t, tc.wantErr, err)
 		})

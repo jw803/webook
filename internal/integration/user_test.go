@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/jw803/webook/internal/integration/startup"
 	"github.com/jw803/webook/internal/web"
 	"github.com/jw803/webook/ioc"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,7 @@ import (
 )
 
 func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
-	server := InitWebServer()
+	server := startup.InitWebServer()
 	rdb := ioc.InitRedis()
 	testCases := []struct {
 		name string
@@ -127,7 +128,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 					"phone":
 				}
 			`,
-			wantCode: 200,
+			wantCode: 400,
 			wantBody: web.Result{
 				Code: 4,
 				Msg:  "输入有误",

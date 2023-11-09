@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jw803/webook/internal/domain"
+	"github.com/jw803/webook/pkg/logger"
 	"net/http"
 	"net/url"
 )
@@ -20,23 +21,28 @@ type service struct {
 	appId     string
 	appSecret string
 	client    *http.Client
+	logger    logger.LoggerV1
 }
 
 // 不偷懒的写法
-func NewServiceV1(appId string, appSecret string, client *http.Client) Service {
+func NewServiceV1(appId string, appSecret string, client *http.Client,
+	logger logger.LoggerV1) Service {
 	return &service{
 		appId:     appId,
 		appSecret: appSecret,
 		client:    client,
+		logger:    logger,
 	}
 }
 
-func NewService(appId string, appSecret string) Service {
+func NewService(appId string, appSecret string,
+	logger logger.LoggerV1) Service {
 	return &service{
 		appId:     appId,
 		appSecret: appSecret,
 		// 依赖注入，但是没完全注入
 		client: http.DefaultClient,
+		logger: logger,
 	}
 }
 
