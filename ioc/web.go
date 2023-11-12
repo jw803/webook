@@ -1,27 +1,31 @@
 package ioc
 
 import (
+	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/web"
 	ijwt "github.com/jw803/webook/internal/web/jwt"
 	"github.com/jw803/webook/internal/web/middleware"
+	"github.com/jw803/webook/pkg/ginx/middlewares/accesslog"
+	"github.com/jw803/webook/pkg/logger"
 	"github.com/redis/go-redis/v9"
 	"strings"
 	"time"
 )
 
 func InitWebServer(mdls []gin.HandlerFunc, userHdl *web.UserHandler,
-	oauth2WechatHdl *web.OAuth2WechatHandler) *gin.Engine {
+	oauth2WechatHdl *web.OAuth2WechatHandler, articleHdl *web.ArticleHandler) *gin.Engine {
 	server := gin.Default()
 	server.Use(mdls...)
 	userHdl.RegisterRoutes(server)
 	oauth2WechatHdl.RegisterRoutes(server)
+	articleHdl.RegisterRoutes(server)
 	return server
 }
 
-func InitMiddlewares(redisClient redis.Cmdable,
-	jwtHdl ijwt.Handler) []gin.HandlerFunc {
+func GinMiddlewares(redisClient redis.Cmdable,
+	jwtHdl ijwt.Handler, l logger.LoggerV1) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
 		middleware.NewLoginJWTMiddlewareBuilder(jwtHdl).
@@ -33,6 +37,13 @@ func InitMiddlewares(redisClient redis.Cmdable,
 			IgnorePaths("/oauth2/wechat/callback").
 			IgnorePaths("/users/login").
 			Build(),
+		accesslog.NewMiddlewareBuilder(func(ctx context.Context, al *accesslog.AccessLog) {
+			// 设置为 DEBUG 级别
+			l.Debug("GIN 收到请求", logger.Field{
+				Key:   "req",
+				Value: al,
+			})
+		}).AllowReqBody(true).AllowRespBody().Build(),
 	}
 }
 

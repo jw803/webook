@@ -1,4 +1,4 @@
-package logger
+package accesslog
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ type MiddlewareBuilder struct {
 	loggerFunc    func(ctx context.Context, al *AccessLog)
 }
 
-func NewBuilder(fn func(ctx context.Context, al *AccessLog)) *MiddlewareBuilder {
+func NewMiddlewareBuilder(fn func(ctx context.Context, al *AccessLog)) *MiddlewareBuilder {
 	return &MiddlewareBuilder{
 		loggerFunc:   fn,
 		allowReqBody: atomic.NewBool(false),

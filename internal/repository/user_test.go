@@ -33,7 +33,7 @@ func Test_UserRepository_FindById(t *testing.T) {
 			name: "緩存未命中，查詢成功",
 			mock: func(ctrl *gomock.Controller) (dao.UserDAO, cache.UserCache) {
 				ud := daomocks.NewMockUserDAO(ctrl)
-				ud.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.User{
+				ud.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.Users{
 					Id: 123,
 					Email: sql.NullString{
 						String: "123@qq.com",
@@ -101,7 +101,7 @@ func Test_UserRepository_FindById(t *testing.T) {
 			name: "緩存未命中，查詢失敗",
 			mock: func(ctrl *gomock.Controller) (dao.UserDAO, cache.UserCache) {
 				ud := daomocks.NewMockUserDAO(ctrl)
-				ud.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.User{}, errors.New("db 爆掉"))
+				ud.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.Users{}, errors.New("db 爆掉"))
 				uc := cachemocks.NewMockUserCache(ctrl)
 				uc.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{}, cache.ErrKeyNotExist)
 				return ud, uc

@@ -6,8 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"github.com/jw803/webook/internal/repository"
+	"github.com/jw803/webook/internal/repository/article"
 	"github.com/jw803/webook/internal/repository/cache"
 	"github.com/jw803/webook/internal/repository/dao"
+	article2 "github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/jw803/webook/internal/service"
 	"github.com/jw803/webook/internal/web"
 	ijwt "github.com/jw803/webook/internal/web/jwt"
@@ -26,11 +28,11 @@ func InitWebServer() *gin.Engine {
 	wire.Build(
 		thirdProvider,
 		userSvcProvider,
-		dao.NewGORMArticleDao,
+		article2.NewGORMArticleDao,
 
 		cache.NewRedisCodeCache,
 		repository.NewCachedCodeRepository,
-		repository.NewArticleRepository,
+		article.NewArticleRepository,
 		// service 部分
 		// 集成测试我们显式指定使用内存实现
 		ioc.InitSmsMemoryService,
@@ -58,8 +60,8 @@ func InitWebServer() *gin.Engine {
 
 func InitArticleHandler() *web.ArticleHandler {
 	wire.Build(thirdProvider,
-		dao.NewGORMArticleDao,
-		repository.NewArticleRepository,
+		article2.NewGORMArticleDao,
+		article.NewArticleRepository,
 		service.NewArticleService,
 		web.NewArticleHandler)
 	return new(web.ArticleHandler)

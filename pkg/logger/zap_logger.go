@@ -2,6 +2,8 @@ package logger
 
 import "go.uber.org/zap"
 
+var _ LoggerV1 = (*ZapLogger)(nil)
+
 type ZapLogger struct {
 	l *zap.Logger
 }

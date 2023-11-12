@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"github.com/jw803/webook/internal/repository/dao"
+	dao "github.com/jw803/webook/internal/repository/dao/article"
 	ijwt "github.com/jw803/webook/internal/web/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,6 +86,83 @@ func (s *ArticleTestSuit) TestArticle() {
 				Msg:  "OK",
 			},
 		},
+		{
+			name: "修改已有帖子，並保存",
+			before: func(t *testing.T) {
+				s.db.Create(&dao.Article{
+					Id:       2,
+					Title:    "我的標題",
+					Content:  "我的內容",
+					Ctime:    111,
+					Utime:    111,
+					AuthorId: 123,
+				})
+			},
+			after: func(t *testing.T) {
+				var article dao.Article
+				err := s.db.Where("Id=?", 2).First(&article).Error
+				assert.NoError(t, err)
+				assert.True(t, article.Utime > 111)
+
+				article.Utime = 0
+				assert.Equal(t, dao.Article{
+					Id:       2,
+					Title:    "新的標題",
+					Content:  "新的內容",
+					Ctime:    111,
+					Utime:    0,
+					AuthorId: 123,
+				}, article)
+			},
+			article: Article{
+				Id:      2,
+				Title:   "新的標題",
+				Content: "新的內容",
+			},
+
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Data: 2,
+				Msg:  "OK",
+			},
+		},
+		{
+			name: "非文章作者本人跑來修改文章",
+			before: func(t *testing.T) {
+				s.db.Create(&dao.Article{
+					Id:       3,
+					Title:    "我的標題",
+					Content:  "我的內容",
+					Ctime:    111,
+					Utime:    111,
+					AuthorId: 456,
+				})
+			},
+			after: func(t *testing.T) {
+				var article dao.Article
+				err := s.db.Where("Id=?", 3).First(&article).Error
+				assert.NoError(t, err)
+				assert.Equal(t, dao.Article{
+					Id:       3,
+					Title:    "我的標題",
+					Content:  "我的內容",
+					Ctime:    111,
+					Utime:    111,
+					AuthorId: 456,
+				}, article)
+			},
+			article: Article{
+				Id:      3,
+				Title:   "新的標題",
+				Content: "新的內容",
+			},
+
+			wantCode: http.StatusOK,
+			wantRes: Result[int64]{
+				Code: 5,
+				Msg:  "系統錯誤",
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -118,6 +195,7 @@ func (s *ArticleTestSuit) TestArticle() {
 }
 
 type Article struct {
+	Id      int64  `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }

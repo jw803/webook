@@ -15,30 +15,32 @@ import (
 )
 
 func InitWebServer() *gin.Engine {
-	wire.Build(ioc.InitDB, ioc.InitRedis,
+	wire.Build(
+		ioc.InitDB, ioc.InitRedis,
+		ioc.InitLogger,
 
-		dao.NewUserDAO,
+		dao.NewGORMUserDAO,
 
-		cache.NewUserCache,
-		cache.NewCodeCache,
+		cache.NewRedisUserCache,
+		cache.NewRedisCodeCache,
 
-		repository.NewUserRepository,
-		repository.NewCodeRepository,
+		repository.NewCachedUserRepository,
+		repository.NewCachedCodeRepository,
 
 		service.NewUserService,
-		service.NewCodeService,
+		service.NewSMSCodeService,
 
 		// 直接基于内存实现
-		ioc.InitSMSService,
+		ioc.InitSmsMemoryService,
 		ioc.InitWechatService,
 
 		web.NewUserHandler,
 		web.NewOAuth2WechatHandler,
 		ioc.NewWechatHandlerConfig,
-		ijwt.NewRedisJWTHandler,
+		ijwt.NewRedisHandler,
 
 		ioc.InitWebServer,
-		ioc.InitMiddlewares,
+		ioc.GinMiddlewares,
 	)
 	// 這邊隨便
 	return new(gin.Engine)
