@@ -28,7 +28,7 @@ func InitWebServer() *gin.Engine {
 	wire.Build(
 		thirdProvider,
 		userSvcProvider,
-		article2.NewGORMArticleDao,
+		article2.NewGORMArticleDAO,
 
 		cache.NewRedisCodeCache,
 		repository.NewCachedCodeRepository,
@@ -60,7 +60,8 @@ func InitWebServer() *gin.Engine {
 
 func InitArticleHandler() *web.ArticleHandler {
 	wire.Build(thirdProvider,
-		article2.NewGORMArticleDao,
+		article2.NewGORMArticleDAO,
+		article2.NewReaderDao,
 		article.NewArticleRepository,
 		service.NewArticleService,
 		web.NewArticleHandler)

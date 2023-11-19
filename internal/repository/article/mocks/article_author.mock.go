@@ -57,7 +57,7 @@ func (mr *MockArticleAuthorRepositoryMockRecorder) Create(ctx, article any) *gom
 // Update mocks base method.
 func (m *MockArticleAuthorRepository) Update(ctx context.Context, article domain.Article) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateById", ctx, article)
+	ret := m.ctrl.Call(m, "Update", ctx, article)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -65,5 +65,5 @@ func (m *MockArticleAuthorRepository) Update(ctx context.Context, article domain
 // Update indicates an expected call of Update.
 func (mr *MockArticleAuthorRepositoryMockRecorder) Update(ctx, article any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateById", reflect.TypeOf((*MockArticleAuthorRepository)(nil).Update), ctx, article)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockArticleAuthorRepository)(nil).Update), ctx, article)
 }
