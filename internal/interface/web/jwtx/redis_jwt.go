@@ -6,6 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
+	"github.com/jw803/webook/pkg/loggerx"
 	"github.com/redis/go-redis/v9"
 	"strings"
 	"time"
@@ -18,6 +21,7 @@ var (
 
 type RedisJWTHandler struct {
 	cmd redis.Cmdable
+	l   loggerx.Logger
 }
 
 func NewRedisHandler(cmd redis.Cmdable) Handler {
@@ -47,19 +51,17 @@ func (h *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid stri
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenStr, err := token.SignedString(RtKey)
 	if err != nil {
-		return err
+		h.l.Error(ctx, "failed to sign jwt string", loggerx.Error(err))
+		return errorx.WithCode(errcode.ErrSignTokenFailed, err.Error())
 	}
 	ctx.Header("x-refresh-token", tokenStr)
 	return nil
 }
 
-func (h *RedisJWTHandler) ClearToken(ctx *gin.Context) error {
+func (h *RedisJWTHandler) ClearToken(ctx *gin.Context, claim *UserClaims) error {
 	ctx.Header("x-jwt-token", "")
 	ctx.Header("x-refresh-token", "")
-
-	claims := ctx.MustGet("claims").(*UserClaims)
-	return h.cmd.Set(ctx, fmt.Sprintf("users:ssid:%s", claims.Ssid),
-		"", time.Hour*24*7).Err()
+	return h.cmd.Set(ctx, fmt.Sprintf("users:ssid:%s", claim.Ssid), "", time.Hour*24*7).Err()
 }
 
 func (h *RedisJWTHandler) CheckSession(ctx *gin.Context, ssid string) error {
@@ -100,7 +102,8 @@ func (h *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string) 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenStr, err := token.SignedString(AtKey)
 	if err != nil {
-		return err
+		h.l.Error(ctx, "failed to sign jwt string", loggerx.Error(err))
+		return errorx.WithCode(errcode.ErrSignTokenFailed, err.Error())
 	}
 	ctx.Header("x-jwt-token", tokenStr)
 	return nil

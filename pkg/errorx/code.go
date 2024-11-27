@@ -1,85 +1,93 @@
-package errorx
+package errors
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 	"sync"
 )
 
-const (
-	CodeSuccess = 0
-	CodeUnknown = 1
-)
-
 var (
-	successCoder = &ErrCode{CodeSuccess, http.StatusOK, "ok", System}
-	unknownCoder = &ErrCode{CodeUnknown, http.StatusInternalServerError, "internal server error", System}
+	unknownCoder defaultCoder = defaultCoder{1, http.StatusInternalServerError, "An internal server error occurred", "http://github.com/marmotedu/errors/README.md"}
 )
 
-var codes = map[int]*ErrCode{}
-var codeMux = &sync.Mutex{}
-
-type ErrCode struct {
-	// C refers to the code of the ErrCode.
-	code int
-
+// Coder defines an interface for an error code detail information.
+type Coder interface {
 	// HTTP status that should be used for the associated error code.
-	httpStatus int
+	HTTPStatus() int
 
 	// External (user) facing error text.
-	external string
+	String() string
 
-	// Ref specify the reference document.
-	errorType ErrorType
+	// Reference returns the detail documents for user.
+	Reference() string
+
+	// Code returns the code of the coder
+	Code() int
 }
 
-// Code returns the integer code of ErrCode.
-func (coder ErrCode) Code() int {
-	return coder.code
+type defaultCoder struct {
+	// C refers to the integer code of the ErrCode.
+	C int
+
+	// HTTP status that should be used for the associated error code.
+	HTTP int
+
+	// External (user) facing error text.
+	Ext string
+
+	// Ref specify the reference document.
+	Ref string
+}
+
+// Code returns the integer code of the coder.
+func (coder defaultCoder) Code() int {
+	return coder.C
+
 }
 
 // String implements stringer. String returns the external error message,
 // if any.
-func (coder ErrCode) External() string {
-	return coder.external
-}
-
-// Reference returns the reference document.
-func (coder ErrCode) ErrorType() ErrorType {
-	return coder.errorType
+func (coder defaultCoder) String() string {
+	return coder.Ext
 }
 
 // HTTPStatus returns the associated HTTP status code, if any. Otherwise,
 // returns 200.
-func (coder ErrCode) HTTPStatus() int {
-	if coder.httpStatus == 0 {
-		return http.StatusInternalServerError
+func (coder defaultCoder) HTTPStatus() int {
+	if coder.HTTP == 0 {
+		return 500
 	}
-	return coder.httpStatus
+
+	return coder.HTTP
 }
 
-// nolint: unparam
-func Register(code int, httpStatus int, errorType ErrorType, external string) {
-	found := slices.Contains([]int{200, 400, 401, 403, 404, 500}, httpStatus)
-	if !found {
-		panic("http code not in `200, 400, 401, 403, 404, 500`")
-	}
-
-	coder := &ErrCode{
-		code:       code,
-		httpStatus: httpStatus,
-		external:   external,
-		errorType:  errorType,
-	}
-
-	mustRegister(coder)
+// Reference returns the reference document.
+func (coder defaultCoder) Reference() string {
+	return coder.Ref
 }
 
-func mustRegister(coder *ErrCode) {
-	if coder.Code() == 0 || coder.Code() == 1 {
-		panic("code '0' is reserved as ErrUnknown error code")
+// codes contains a map of error codes to metadata.
+var codes = map[int]Coder{}
+var codeMux = &sync.Mutex{}
+
+// Register register a user define error code.
+// It will overrid the exist code.
+func Register(coder Coder) {
+	if coder.Code() == 0 {
+		panic("code `0` is reserved by `github.com/marmotedu/errors` as unknownCode error code")
+	}
+
+	codeMux.Lock()
+	defer codeMux.Unlock()
+
+	codes[coder.Code()] = coder
+}
+
+// MustRegister register a user define error code.
+// It will panic when the same Code already exist.
+func MustRegister(coder Coder) {
+	if coder.Code() == 0 {
+		panic("code '0' is reserved by 'github.com/marmotedu/errors' as ErrUnknown error code")
 	}
 
 	codeMux.Lock()
@@ -92,30 +100,24 @@ func mustRegister(coder *ErrCode) {
 	codes[coder.Code()] = coder
 }
 
-func ParseCoder(err error) *ErrCode {
+// ParseCoder parse any error into *withCode.
+// nil error will return nil direct.
+// None withStack error will be parsed as ErrUnknown.
+func ParseCoder(err error) Coder {
 	if err == nil {
-		return successCoder
+		return nil
 	}
 
-	var v *withCode
-	if errors.As(err, &v) {
+	if v, ok := err.(*withCode); ok {
 		if coder, ok := codes[v.code]; ok {
-			ext := coder.external
-			if v.external != "" {
-				ext = v.external
-			}
-			return &ErrCode{
-				code:       coder.code,
-				httpStatus: coder.httpStatus,
-				external:   ext,
-				errorType:  coder.errorType,
-			}
+			return coder
 		}
 	}
 
 	return unknownCoder
 }
 
+// IsCode reports whether any error in err's chain contains the given error code.
 func IsCode(err error, code int) bool {
 	if v, ok := err.(*withCode); ok {
 		if v.code == code {
@@ -130,4 +132,8 @@ func IsCode(err error, code int) bool {
 	}
 
 	return false
+}
+
+func init() {
+	codes[unknownCoder.Code()] = unknownCoder
 }
