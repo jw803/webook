@@ -1,12 +1,12 @@
 package ioc
 
 import (
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/loggerx"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
 
-func InitLogger() logger.LoggerV1 {
+func InitLogger() loggerx.LoggerV1 {
 	cfg := zap.NewDevelopmentConfig()
 	err := viper.UnmarshalKey("log", &cfg)
 	if err != nil {
@@ -16,5 +16,5 @@ func InitLogger() logger.LoggerV1 {
 	if err != nil {
 		panic(err)
 	}
-	return logger.NewZapLogger(l)
+	return loggerx.NewZapLogger(l)
 }

@@ -1,7 +1,6 @@
-package jwt
+package jwtx
 
 import (
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -52,7 +51,7 @@ func (h *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid stri
 	tokenStr, err := token.SignedString(RtKey)
 	if err != nil {
 		h.l.Error(ctx, "failed to sign jwt string", loggerx.Error(err))
-		return errorx.WithCode(errcode.ErrSignTokenFailed, err.Error())
+		return err
 	}
 	ctx.Header("x-refresh-token", tokenStr)
 	return nil
@@ -73,7 +72,7 @@ func (h *RedisJWTHandler) CheckSession(ctx *gin.Context, ssid string) error {
 		if val == 0 {
 			return nil
 		}
-		return errors.New("session 已经无效了")
+		return errorx.WithCode(errcode.ErrSessionInvalid, "invalid session")
 	default:
 		return err
 	}
@@ -103,7 +102,7 @@ func (h *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string) 
 	tokenStr, err := token.SignedString(AtKey)
 	if err != nil {
 		h.l.Error(ctx, "failed to sign jwt string", loggerx.Error(err))
-		return errorx.WithCode(errcode.ErrSignTokenFailed, err.Error())
+		return err
 	}
 	ctx.Header("x-jwt-token", tokenStr)
 	return nil

@@ -1,6 +1,7 @@
-package errors
+package errorx
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -108,7 +109,8 @@ func ParseCoder(err error) Coder {
 		return nil
 	}
 
-	if v, ok := err.(*withCode); ok {
+	var v *withCode
+	if errors.As(err, &v) {
 		if coder, ok := codes[v.code]; ok {
 			return coder
 		}

@@ -6,10 +6,10 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/domain"
+	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/service"
 	svcmocks "github.com/jw803/webook/internal/service/mocks"
-	ijwt "github.com/jw803/webook/internal/web/jwt"
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/loggerx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -89,7 +89,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 				})
 			})
 
-			h := NewArticleHandler(tc.mock(ctrl), logger.NewNoOpLogger())
+			h := NewArticleHandler(tc.mock(ctrl), loggerx.NewNoOpLogger())
 			h.RegisterRoutes(server)
 
 			req, err := http.NewRequest(http.MethodPost, "/articles/publish", bytes.NewBuffer([]byte(tc.reqBody)))

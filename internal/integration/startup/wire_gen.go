@@ -9,14 +9,14 @@ package startup
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
+	"github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/repository"
-	"github.com/jw803/webook/internal/repository/article"
+	article2 "github.com/jw803/webook/internal/repository/article"
 	"github.com/jw803/webook/internal/repository/cache"
 	"github.com/jw803/webook/internal/repository/dao"
-	articleDao "github.com/jw803/webook/internal/repository/dao/article"
+	"github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/jw803/webook/internal/service"
 	"github.com/jw803/webook/internal/web"
-	"github.com/jw803/webook/internal/web/jwt"
 	"github.com/jw803/webook/ioc"
 )
 
@@ -25,7 +25,7 @@ import (
 //go:generate wire
 func InitWebServer() *gin.Engine {
 	cmdable := InitRedis()
-	handler := jwt.NewRedisHandler(cmdable)
+	handler := jwtx.NewRedisHandler(cmdable)
 	loggerV1 := InitLog()
 	v := ioc.GinMiddlewares(cmdable, handler, loggerV1)
 	gormDB := InitTestDB()
@@ -41,16 +41,19 @@ func InitWebServer() *gin.Engine {
 	wechatService := InitPhantomWechatService(loggerV1)
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, handler, wechatHandlerConfig)
-	articleDao := articleDao.NewGORMArticleDAO(gormDB)
-	articleRepository := article.NewArticleRepository(articleDao)
+	articleDAO := article.NewGORMArticleDAO(gormDB)
+	articleCache := cache.NewRedisArticleCache(cmdable)
+	articleRepository := article2.NewArticleRepository(articleDAO, articleCache)
 	articleService := service.NewArticleService(articleRepository)
 	articleHandler := web.NewArticleHandler(articleService, loggerV1)
 	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
 	return engine
 }
 
-func InitArticleHandler(articleDAO articleDao.ArticleDAO) *web.ArticleHandler {
-	articleRepository := article.NewArticleRepository(articleDAO)
+func InitArticleHandler(dao2 article.ArticleDAO) *web.ArticleHandler {
+	cmdable := InitRedis()
+	articleCache := cache.NewRedisArticleCache(cmdable)
+	articleRepository := article2.NewArticleRepository(dao2, articleCache)
 	articleService := service.NewArticleService(articleRepository)
 	loggerV1 := InitLog()
 	articleHandler := web.NewArticleHandler(articleService, loggerV1)

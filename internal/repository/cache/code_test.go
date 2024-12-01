@@ -20,7 +20,8 @@ func TestRedisCodeCache_Set(t *testing.T) {
 		phone string
 		code  string
 
-		wantErr error
+		wantErr     error
+		WantErrCode int
 	}{
 		{
 			name: "验证码设置成功",
@@ -73,8 +74,6 @@ func TestRedisCodeCache_Set(t *testing.T) {
 			biz:   "login",
 			phone: "152",
 			code:  "123456",
-
-			wantErr: ErrCodeSendTooMany,
 		},
 		{
 			name: "系统错误",

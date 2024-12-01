@@ -4,11 +4,11 @@ import (
 	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/web"
-	ijwt "github.com/jw803/webook/internal/web/jwt"
 	"github.com/jw803/webook/internal/web/middleware"
-	"github.com/jw803/webook/pkg/ginx/middlewares/accesslog"
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/ginx_old/middlewares/accesslog"
+	"github.com/jw803/webook/pkg/loggerx"
 	"github.com/redis/go-redis/v9"
 	"strings"
 	"time"
@@ -25,7 +25,7 @@ func InitWebServer(mdls []gin.HandlerFunc, userHdl *web.UserHandler,
 }
 
 func GinMiddlewares(redisClient redis.Cmdable,
-	jwtHdl ijwt.Handler, l logger.LoggerV1) []gin.HandlerFunc {
+	jwtHdl ijwt.Handler, l loggerx.LoggerV1) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
 		middleware.NewLoginJWTMiddlewareBuilder(jwtHdl).
@@ -39,7 +39,7 @@ func GinMiddlewares(redisClient redis.Cmdable,
 			Build(),
 		accesslog.NewMiddlewareBuilder(func(ctx context.Context, al *accesslog.AccessLog) {
 			// 设置为 DEBUG 级别
-			l.Debug("GIN 收到请求", logger.Field{
+			l.Debug("GIN 收到请求", loggerx.Field{
 				Key:   "req",
 				Value: al,
 			})

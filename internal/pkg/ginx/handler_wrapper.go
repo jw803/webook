@@ -1,23 +1,19 @@
 package ginx
 
 import (
-	"encoding/json"
-	"mime/multipart"
-	"net/http"
-
-	"github.com/jw803/webook/pkg/errorx"
-
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
+	"github.com/jw803/webook/pkg/loggerx"
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/jw803/webook/pkg/ginx/response"
-	"github.com/jw803/webook/pkg/logging"
 )
 
-var logger = logging.NewNoOpLogger()
+var logger = loggerx.NewNoOpLogger()
 
-func SetLogger(l logging.Logger) {
+func SetLogger(l loggerx.Logger) {
 	logger = l
 }
 
@@ -28,287 +24,171 @@ func InitErrorCounter(opt prometheus.CounterOpts) {
 	prometheus.MustRegister(errorCounter)
 }
 
-func Wrap(fn func(*gin.Context) (any, *response.Response)) gin.HandlerFunc {
+func Wrap(fn func(*gin.Context) (any, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		data, res := fn(ctx)
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
-		}
-		response.SendResponse(ctx, res, data)
+		data, fnErr := fn(ctx)
+		WriteResponse(ctx, fnErr, data)
+		return
 	}
 }
 
-func WrapClaim[T any](fn func(*gin.Context, *T) (any, *response.Response)) gin.HandlerFunc {
+func WrapClaim[C jwt.Claims](fn func(*gin.Context, *C) (any, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		rawVal, ok := ctx.Get("claims")
+		claims, ok := parseClaim[C](ctx)
 		if !ok {
-			logger.Error(ctx, "", "", "No Claim", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-		claims, ok := rawVal.(*T)
-		if !ok {
-			logger.Error(ctx, "", "", "Token Format Error", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
 			return
 		}
 
-		data, res := fn(ctx, claims)
-
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		response.SendResponse(ctx, res, data)
+		data, fnErr := fn(ctx, claims)
+		WriteResponse(ctx, fnErr, data)
+		return
 	}
 }
 
-func WrapReq[DTO any](fn func(ctx *gin.Context, dto DTO) (any, *response.Response)) gin.HandlerFunc {
+func WrapReq[DTO any](fn func(ctx *gin.Context, dto DTO) (any, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var dto DTO
-		if err := ctx.Bind(&dto); err != nil {
-			logger.Error(ctx, "", "", "failed to parse request body", logging.Error(err))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
+		dto, ok := bindAndValidateReq[DTO](ctx)
+		if ok {
 			return
 		}
-		data, res := fn(ctx, dto)
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
-		}
-		response.SendResponse(ctx, res, data)
+
+		data, fnErr := fn(ctx, *dto)
+		WriteResponse(ctx, fnErr, data)
+		return
 	}
 }
 
-func WrapForm[DTO any](fn func(ctx *gin.Context, file multipart.File, fileHeader *multipart.FileHeader, dto DTO) (any, *response.Response)) gin.HandlerFunc {
+func WrapQuery[Query any](fn func(*gin.Context, Query) (any, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var dto DTO
-
-		file, fileHeader, err := ctx.Request.FormFile("file")
-		if err != nil {
-			logger.Error(ctx, "", "", "failed to parse request body", logging.Error(err))
-			res := response.NewResponse(400001, http.StatusBadRequest, "Bad File Format & Content")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-		defer file.Close()
-
-		bodyString := ctx.Request.FormValue("body")
-		if bodyString == "" {
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-		if err := json.Unmarshal([]byte(bodyString), &dto); err != nil {
-			logger.Error(ctx, "", "", "failed to parse request body", logging.Error(err))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
+		query, ok := bindAndValidateQuery[Query](ctx)
+		if !ok {
 			return
 		}
 
-		data, res := fn(ctx, file, fileHeader, dto)
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		response.SendResponse(ctx, res, data)
+		data, fnErr := fn(ctx, *query)
+		WriteResponse(ctx, fnErr, data)
+		return
 	}
 }
 
-func WrapQuery[Query any](fn func(*gin.Context, Query) (any, *response.Response)) gin.HandlerFunc {
+func WrapClaimsReq[C jwt.Claims, DTO any](fn func(*gin.Context, *C, DTO) (any, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var query Query
-		if err := ctx.ShouldBindQuery(&query); err != nil {
-			logger.Error(ctx, "", "", "Failed To Parse Request Body", logging.Error(err))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
+		claims, ok := parseClaim[C](ctx)
+		if !ok {
 			return
 		}
 
-		data, res := fn(ctx, query)
-
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
+		dto, ok := bindAndValidateReq[DTO](ctx)
+		if ok {
 			return
 		}
 
-		response.SendResponse(ctx, res, data)
+		data, fnErr := fn(ctx, claims, *dto)
+		WriteResponse(ctx, fnErr, data)
+		return
 	}
 }
 
-func WrapClaimForm[DTO any](fn func(ctx *gin.Context, shoplineClaim ShoplineClaims, file multipart.File, fileHeader *multipart.FileHeader, dto DTO) (any, *response.Response)) gin.HandlerFunc {
+func WrapClaimsQuery[C jwt.Claims, Query any](fn func(*gin.Context, *C, Query) (any, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var dto DTO
-
-		file, fileHeader, err := ctx.Request.FormFile("file")
-		if err != nil {
-			logger.Error(ctx, "", "", "failed to parse request body", logging.Error(err))
-			res := response.NewResponse(400001, http.StatusBadRequest, "Bad File Format & Content")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-		defer file.Close()
-
-		const maxFileSize = 1.5 * 1024 * 1024 // 1.5MB in bytes
-		if fileHeader.Size > maxFileSize {
-			logger.Error(ctx, "", "", "file size exceeds 10MB limit", logging.Error(err))
-			res := response.NewResponse(400002, http.StatusBadRequest, "File size exceeds 10MB limit")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		bodyString := ctx.Request.FormValue("body")
-		if bodyString == "" {
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		if err := json.Unmarshal([]byte(bodyString), &dto); err != nil {
-			logger.Error(ctx, "", "", "failed to parse request body", logging.Error(err))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		validate := validator.New()
-		if err := validate.Struct(dto); err != nil {
-			logger.Error(ctx, "", "", "Request body field validation failed", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		rawVal, ok := ctx.Get("shopline")
+		query, ok := bindAndValidateQuery[Query](ctx)
 		if !ok {
-			logger.Error(ctx, "", "", "No Shopline Claim", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
 			return
 		}
-		claims, ok := rawVal.(ShoplineClaims)
+
+		claims, ok := parseClaim[C](ctx)
 		if !ok {
-			logger.Error(ctx, "", "", "Token Format Error", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
 			return
 		}
 
-		data, res := fn(ctx, claims, file, fileHeader, dto)
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		response.SendResponse(ctx, res, data)
+		data, fnErr := fn(ctx, claims, *query)
+		WriteResponse(ctx, fnErr, data)
+		return
 	}
 }
 
-func WrapClaimsReq[DTO any](fn func(*gin.Context, ShoplineClaims, DTO) (any, *response.Response)) gin.HandlerFunc {
+func WrapClaimsParam[C jwt.Claims, Param any](fn func(*gin.Context, *C, Param) (any, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		var dto DTO
-		if err := ctx.BindJSON(&dto); err != nil {
-			logger.Error(ctx, "", "", "Failed To Parse Request Body", logging.Error(err))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-		validate := validator.New()
-		if err := validate.Struct(dto); err != nil {
-			logger.Warn(ctx, "", "", "Request body field validation failed", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		rawVal, ok := ctx.Get("shopline")
+		params, ok := bindAndValidateParams[Param](ctx)
 		if !ok {
-			logger.Error(ctx, "", "", "No Shopline Claim", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
 			return
 		}
-		claims, ok := rawVal.(ShoplineClaims)
+
+		claims, ok := parseClaim[C](ctx)
 		if !ok {
-			logger.Error(ctx, "", "", "Token Format Error", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
 			return
 		}
 
-		data, res := fn(ctx, claims, dto)
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		response.SendResponse(ctx, res, data)
+		data, fnErr := fn(ctx, claims, *params)
+		WriteResponse(ctx, fnErr, data)
+		return
 	}
 }
 
-func WrapClaimsQuery[Query any](fn func(*gin.Context, ShoplineClaims, Query) (any, *response.Response)) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var query Query
-		if err := ctx.ShouldBindQuery(&query); err != nil {
-			logger.Error(ctx, "", "", "Failed To Parse Request Body", logging.Error(err))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		rawVal, ok := ctx.Get("shopline")
-		if !ok {
-			logger.Error(ctx, "", "", "No Shopline Claim", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-		claims, ok := rawVal.(ShoplineClaims)
-		if !ok {
-			logger.Error(ctx, "", "", "Token Format Error", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		data, res := fn(ctx, claims, query)
-
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		response.SendResponse(ctx, res, data)
-	}
+func isValidationError(err error) bool {
+	var invalidValidationError *validator.InvalidValidationError
+	return errors.As(err, &invalidValidationError)
 }
 
-func WrapClaimsReqWithoutClaims[DTO any](fn func(*gin.Context, DTO) (any, *response.Response)) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var dto DTO
-		if err := ctx.BindJSON(&dto); err != nil {
-			logger.Error(ctx, "", "", "Failed To Parse Request Body", logging.Error(err))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-		validate := validator.New()
-		if err := validate.Struct(dto); err != nil {
-			logger.Error(ctx, "", "", "Request body field validation failed", logging.String("path", ctx.Request.URL.Path))
-			res := response.NewResponse(400000, http.StatusBadRequest, "Bad Request")
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		data, res := fn(ctx, dto)
-		if res.Code() != errorx.CodeSuccess {
-			response.SendResponse(ctx, res, nil)
-			return
-		}
-
-		response.SendResponse(ctx, res, data)
+func parseClaim[C jwt.Claims](ctx *gin.Context) (*C, bool) {
+	rawVal, ok := ctx.Get("claims")
+	if !ok {
+		logger.P3(ctx, "claim missing")
+		WriteResponse(ctx, errorx.WithCode(errcode.ErrTokenMissing, "claim missing"), nil)
+		return nil, false
 	}
+
+	claims, ok := rawVal.(*C)
+	if !ok {
+		logger.P3(ctx, "invalid token format")
+		WriteResponse(ctx, errorx.WithCode(errcode.ErrTokenInvalid, "invalid token format"), nil)
+		return nil, false
+	}
+
+	return claims, true
+}
+
+func bindAndValidateReq[DTO any](ctx *gin.Context) (*DTO, bool) {
+	var dto DTO
+	if err := ctx.ShouldBind(&dto); err != nil {
+		if isValidationError(err) {
+			logger.P3(ctx, "failed to validate request body", loggerx.Error(err))
+			WriteResponse(ctx, errorx.WithCode(errcode.ErrValidation, "failed to validate request body"), nil)
+			return nil, true
+		}
+		logger.P3(ctx, "failed to bind request body", loggerx.Error(err))
+		WriteResponse(ctx, errorx.WithCode(errcode.ErrBind, "failed to bind request body"), nil)
+		return nil, true
+	}
+	return &dto, false
+}
+
+func bindAndValidateQuery[DTO any](ctx *gin.Context) (*DTO, bool) {
+	var dto DTO
+	if err := ctx.ShouldBindQuery(&dto); err != nil {
+		if isValidationError(err) {
+			logger.P3(ctx, "failed to validate request query", loggerx.Error(err))
+			WriteResponse(ctx, errorx.WithCode(errcode.ErrValidation, "failed to validate request query"), nil)
+			return nil, true
+		}
+		logger.P3(ctx, "failed to bind request query", loggerx.Error(err))
+		WriteResponse(ctx, errorx.WithCode(errcode.ErrBind, "failed to bind request query"), nil)
+		return nil, true
+	}
+	return &dto, false
+}
+
+func bindAndValidateParams[DTO any](ctx *gin.Context) (*DTO, bool) {
+	var dto DTO
+	if err := ctx.ShouldBindUri(&dto); err != nil {
+		if isValidationError(err) {
+			logger.P3(ctx, "failed to validate request path params", loggerx.Error(err))
+			WriteResponse(ctx, errorx.WithCode(errcode.ErrValidation, "failed to validate request path params"), nil)
+			return nil, true
+		}
+		logger.P3(ctx, "failed to bind request body", loggerx.Error(err))
+		WriteResponse(ctx, errorx.WithCode(errcode.ErrBind, "failed to bind request path params"), nil)
+		return nil, true
+	}
+	return &dto, false
 }

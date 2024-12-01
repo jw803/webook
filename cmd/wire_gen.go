@@ -8,6 +8,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/repository"
 	article2 "github.com/jw803/webook/internal/repository/article"
 	"github.com/jw803/webook/internal/repository/cache"
@@ -15,7 +16,6 @@ import (
 	"github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/jw803/webook/internal/service"
 	"github.com/jw803/webook/internal/web"
-	"github.com/jw803/webook/internal/web/jwt"
 	"github.com/jw803/webook/ioc"
 )
 
@@ -23,7 +23,7 @@ import (
 
 func InitWebServer() *gin.Engine {
 	cmdable := ioc.InitRedis()
-	handler := jwt.NewRedisHandler(cmdable)
+	handler := jwtx.NewRedisHandler(cmdable)
 	loggerV1 := ioc.InitLogger()
 	v := ioc.GinMiddlewares(cmdable, handler, loggerV1)
 	db := ioc.InitDB()

@@ -1,9 +1,9 @@
-package ginx
+package ginx_old
 
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/loggerx"
 	"net/http"
 )
 
@@ -11,7 +11,7 @@ import (
 // 技术含量不是很高，但是绝对有技巧
 
 // L 使用包变量
-var L logger.LoggerV1
+var L loggerx.LoggerV1
 
 func WrapToken[C jwt.Claims](fn func(ctx *gin.Context, uc C) (Result, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -35,10 +35,10 @@ func WrapToken[C jwt.Claims](fn func(ctx *gin.Context, uc C) (Result, error)) gi
 		if err != nil {
 			// 开始处理 error，其实就是记录一下日志
 			L.Error("处理业务逻辑出错",
-				logger.String("path", ctx.Request.URL.Path),
+				loggerx.String("path", ctx.Request.URL.Path),
 				// 命中的路由
-				logger.String("route", ctx.FullPath()),
-				logger.Error(err))
+				loggerx.String("route", ctx.FullPath()),
+				loggerx.Error(err))
 		}
 		ctx.JSON(http.StatusOK, res)
 		// 再执行一些东西
@@ -71,10 +71,10 @@ func WrapBodyAndToken[Req any, C jwt.Claims](fn func(ctx *gin.Context, req Req, 
 		if err != nil {
 			// 开始处理 error，其实就是记录一下日志
 			L.Error("处理业务逻辑出错",
-				logger.String("path", ctx.Request.URL.Path),
+				loggerx.String("path", ctx.Request.URL.Path),
 				// 命中的路由
-				logger.String("route", ctx.FullPath()),
-				logger.Error(err))
+				loggerx.String("route", ctx.FullPath()),
+				loggerx.Error(err))
 		}
 		ctx.JSON(http.StatusOK, res)
 	}
@@ -94,16 +94,16 @@ func WrapBodyV1[T any](fn func(ctx *gin.Context, req T) (Result, error)) gin.Han
 		if err != nil {
 			// 开始处理 error，其实就是记录一下日志
 			L.Error("处理业务逻辑出错",
-				logger.String("path", ctx.Request.URL.Path),
+				loggerx.String("path", ctx.Request.URL.Path),
 				// 命中的路由
-				logger.String("route", ctx.FullPath()),
-				logger.Error(err))
+				loggerx.String("route", ctx.FullPath()),
+				loggerx.Error(err))
 		}
 		ctx.JSON(http.StatusOK, res)
 	}
 }
 
-func WrapBody[T any](l logger.LoggerV1, fn func(ctx *gin.Context, req T) (Result, error)) gin.HandlerFunc {
+func WrapBody[T any](l loggerx.LoggerV1, fn func(ctx *gin.Context, req T) (Result, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req T
 		if err := ctx.Bind(&req); err != nil {
@@ -117,10 +117,10 @@ func WrapBody[T any](l logger.LoggerV1, fn func(ctx *gin.Context, req T) (Result
 		if err != nil {
 			// 开始处理 error，其实就是记录一下日志
 			l.Error("处理业务逻辑出错",
-				logger.String("path", ctx.Request.URL.Path),
+				loggerx.String("path", ctx.Request.URL.Path),
 				// 命中的路由
-				logger.String("route", ctx.FullPath()),
-				logger.Error(err))
+				loggerx.String("route", ctx.FullPath()),
+				loggerx.Error(err))
 		}
 		ctx.JSON(http.StatusOK, res)
 	}

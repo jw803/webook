@@ -6,7 +6,6 @@ import (
 )
 
 var (
-	ErrCodeSendTooMany        = cache.ErrCodeSendTooMany
 	ErrCodeVerifyTooManyTimes = cache.ErrCodeVerifyTooManyTimes
 )
 

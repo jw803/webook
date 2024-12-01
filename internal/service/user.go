@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"github.com/jw803/webook/internal/domain"
+	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/internal/repository"
+	"github.com/jw803/webook/pkg/errorx"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var ErrUserDuplicateEmail = repository.ErrUserDuplicate
 var ErrInvalidUserOrPassword = errors.New("账号/邮箱或密码不对")
 
 type UserService interface {
@@ -17,6 +18,7 @@ type UserService interface {
 	FindOrCreate(ctx context.Context, phone string) (domain.User, error)
 	FindOrCreateByWechat(ctx context.Context, wechatInfo domain.WechatInfo) (domain.User, error)
 	Profile(ctx context.Context, id int64) (domain.User, error)
+	EditExtraInfo(ctx context.Context, u domain.User) error
 }
 
 type userService struct {
@@ -40,8 +42,8 @@ func NewUserService(repo repository.UserRepository) UserService {
 func (svc *userService) Login(ctx context.Context, email, password string) (domain.User, error) {
 	// 先找用户
 	u, err := svc.repo.FindByEmail(ctx, email)
-	if err == repository.ErrUserNotFound {
-		return domain.User{}, ErrInvalidUserOrPassword
+	if errorx.IsCode(err, errcode.ErrUserNotFound) {
+		return domain.User{}, errorx.WithCode(errcode.ErrInvalidUserNameOrPassword, err.Error())
 	}
 	if err != nil {
 		return domain.User{}, err
@@ -49,21 +51,17 @@ func (svc *userService) Login(ctx context.Context, email, password string) (doma
 	// 比较密码了
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	if err != nil {
-		// DEBUG
-		return domain.User{}, ErrInvalidUserOrPassword
+		return domain.User{}, errorx.WithCode(errcode.ErrInvalidUserNameOrPassword, err.Error())
 	}
-
 	return u, nil
 }
 
 func (svc *userService) SignUp(ctx context.Context, u domain.User) error {
-	// 你要考虑加密放在哪里的问题了
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 	u.Password = string(hash)
-	// 然后就是，存起来
 	return svc.repo.Create(ctx, u)
 }
 
@@ -73,7 +71,7 @@ func (svc *userService) FindOrCreate(ctx context.Context,
 	// 这个叫做快路径
 	u, err := svc.repo.FindByPhone(ctx, phone)
 	// 要判断，有咩有这个用户
-	if err != repository.ErrUserNotFound {
+	if !errorx.IsCode(err, errcode.ErrUserNotFound) {
 		// 绝大部分请求进来这里
 		// nil 会进来这里
 		// 不为 ErrUserNotFound 的也会进来这里
@@ -92,7 +90,7 @@ func (svc *userService) FindOrCreate(ctx context.Context,
 		Phone: phone,
 	}
 	err = svc.repo.Create(ctx, u)
-	if err != nil && err != repository.ErrUserDuplicate {
+	if err != nil && !errorx.IsCode(err, errcode.ErrUserDuplicated) {
 		return u, err
 	}
 	// 因为这里会遇到主从延迟的问题
@@ -109,7 +107,7 @@ func (svc *userService) FindOrCreateByWechat(ctx context.Context,
 		WechatInfo: info,
 	}
 	err = svc.repo.Create(ctx, u)
-	if err != nil && err != repository.ErrUserDuplicate {
+	if err != nil && !errorx.IsCode(err, errcode.ErrUserDuplicated) {
 		return u, err
 	}
 	// 因为这里会遇到主从延迟的问题
@@ -128,4 +126,11 @@ func PathsDownGrade(ctx context.Context, quick, slow func()) {
 		return
 	}
 	slow()
+}
+
+func (svc *userService) EditExtraInfo(ctx context.Context, u domain.User) error {
+	if err := svc.repo.EditExtraInfo(ctx, u); err != nil {
+		return err
+	}
+	return nil
 }

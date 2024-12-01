@@ -1,9 +1,9 @@
 package startup
 
 import (
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/loggerx"
 )
 
-func InitLog() logger.LoggerV1 {
-	return logger.NewNoOpLogger()
+func InitLog() loggerx.LoggerV1 {
+	return loggerx.NewNoOpLogger()
 }

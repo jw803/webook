@@ -7,7 +7,7 @@ import (
 	"github.com/jw803/webook/internal/repository"
 	"github.com/jw803/webook/internal/repository/cache"
 	articleDao "github.com/jw803/webook/internal/repository/dao/article"
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/loggerx"
 	"gorm.io/gorm"
 	"time"
 )
@@ -38,12 +38,13 @@ type CachedArticleRepository struct {
 	db *gorm.DB
 
 	cache cache.ArticleCache
-	l     logger.LoggerV1
+	l     loggerx.Logger
 }
 
-func NewArticleRepository(dao articleDao.ArticleDAO) ArticleRepository {
+func NewArticleRepository(dao articleDao.ArticleDAO, articleCache cache.ArticleCache) ArticleRepository {
 	return &CachedArticleRepository{
-		dao: dao,
+		dao:   dao,
+		cache: articleCache,
 	}
 }
 
@@ -75,7 +76,7 @@ func (repo *CachedArticleRepository) preCache(ctx context.Context, data []domain
 	if len(data) > 0 && len(data[0].Content) < 1024*1024 {
 		err := repo.cache.Set(ctx, data[0])
 		if err != nil {
-			repo.l.Error("提前预加载缓存失败", logger.Error(err))
+			repo.l.Error("提前预加载缓存失败", loggerx.Error(err))
 		}
 	}
 }
@@ -98,6 +99,15 @@ func (repo *CachedArticleRepository) Update(ctx context.Context, article domain.
 
 func (repo *CachedArticleRepository) Sync(ctx context.Context, art domain.Article) (int64, error) {
 	id, err := repo.dao.Sync(ctx, repo.ToEntity(art))
+	if err == nil {
+		repo.cache.DelFirstPage(ctx, art.Author.Id)
+		er := repo.cache.SetPub(ctx, art)
+		if er != nil {
+			// 不需要特别关心
+			// 比如说输出 WARN 日志
+			repo.l.Warn(ctx, "failed to set pub article", loggerx.Error(er))
+		}
+	}
 	return id, err
 }
 
@@ -220,7 +230,7 @@ func (repo *CachedArticleRepository) List(ctx context.Context, uid int64, offset
 	// 回写缓存的时候，可以同步，也可以异步
 	go func() {
 		err := repo.cache.SetFirstPage(ctx, uid, data)
-		repo.l.Error("回写缓存失败", logger.Error(err))
+		repo.l.Error("回写缓存失败", loggerx.Error(err))
 		repo.preCache(ctx, data)
 	}()
 	return data, nil

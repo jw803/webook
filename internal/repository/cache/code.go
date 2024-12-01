@@ -5,6 +5,9 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
+	"github.com/jw803/webook/pkg/loggerx"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -29,12 +32,14 @@ type CodeCache interface {
 
 type RedisCodeCache struct {
 	client redis.Cmdable
+	l      loggerx.Logger
 }
 
 // NewCodeCacheGoBestPractice Go 的最佳实践是返回具体类型
-func NewCodeCacheGoBestPractice(client redis.Cmdable) *RedisCodeCache {
+func NewCodeCacheGoBestPractice(client redis.Cmdable, l loggerx.Logger) *RedisCodeCache {
 	return &RedisCodeCache{
 		client: client,
+		l:      l,
 	}
 }
 
@@ -47,6 +52,7 @@ func NewRedisCodeCache(client redis.Cmdable) CodeCache {
 func (c *RedisCodeCache) Set(ctx context.Context, biz, phone, code string) error {
 	res, err := c.client.Eval(ctx, luaSetCode, []string{c.key(biz, phone)}, code).Int()
 	if err != nil {
+		c.l.Error(ctx, "failed to set code in redis", loggerx.Error(err))
 		return err
 	}
 	switch res {
@@ -56,11 +62,13 @@ func (c *RedisCodeCache) Set(ctx context.Context, biz, phone, code string) error
 	case -1:
 		// 你要在对应的告警系统里面配置，
 		// 比如说规则，一分钟内出现超过100次 WARN，你就告警
-		return ErrCodeSendTooMany
+		c.l.Error(ctx, "send code too frequently")
+		return errorx.WithCode(errcode.ErrSMSCodeSendTooFrequently, "verification code is being sent too frequently")
 	//case -2:
 	//	return
 	default:
 		// 系统错误
+		c.l.Error(ctx, "unexpected key ttl, it should not be permanent")
 		return errors.New("系统错误")
 	}
 }

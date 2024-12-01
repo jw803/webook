@@ -3,7 +3,7 @@ package middleware
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	ijwt "github.com/jw803/webook/internal/web/jwt"
+	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 	"net/http"
 )
 

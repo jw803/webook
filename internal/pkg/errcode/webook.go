@@ -1,9 +1,17 @@
-package code
+package errcode
 
 // User Module
 const (
 	ErrUserNotFound int = iota + 110001
 	ErrInvalidUserNameOrPassword
+	ErrUserDuplicated
 
-	ErrLoginCodeSendTooMany
+	ErrInvalidPassword
+	ErrPasswordNotMatch
+
+	ErrSMSCodeSendTooFrequently
+	ErrSMSCodeInvalid
+
+	ErrArticleNotFound
+	ErrMaliciousUser
 )

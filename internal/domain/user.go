@@ -11,7 +11,9 @@ type User struct {
 	Email    string
 	Password string
 	Phone    string
-	Nickname string
+	NickName string
+	Birthday string
+	Intro    string
 
 	// 不要组合，万一你将来可能还有 DingDingInfo，里面有同名字段 UnionID
 	WechatInfo WechatInfo

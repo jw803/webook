@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jw803/webook/internal/domain"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -50,10 +52,10 @@ func (r *RedisArticleCache) SetPub(ctx context.Context, art domain.Article) erro
 	if err != nil {
 		return err
 	}
-	return r.client.Set(ctx, r.readerArtKey(art.Id),
-		data,
-		// 设置长过期时间
-		time.Minute*30).Err()
+	if err = r.client.Set(ctx, r.readerArtKey(art.Id), data, time.Minute*30).Err(); err != nil {
+		return errorx.WithCode(errcode.ErrRedis, err.Error())
+	}
+	return nil
 }
 
 func (r *RedisArticleCache) Get(ctx context.Context, id int64) (domain.Article, error) {

@@ -2,7 +2,8 @@ package article
 
 import (
 	"context"
-	"errors"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
 	"gorm.io/gorm"
 	"time"
 )
@@ -70,7 +71,10 @@ func (dao *GORMArticleDAO) Insert(ctx context.Context, article Article) (int64, 
 	article.Ctime = now
 	article.Utime = now
 	err := dao.db.WithContext(ctx).Create(&article).Error
-	return article.Id, err
+	if err != nil {
+		return article.Id, errorx.WithCode(errcode.ErrDatabase, err.Error())
+	}
+	return article.Id, nil
 }
 
 func (dao *GORMArticleDAO) UpdateById(ctx context.Context, article Article) error {
@@ -85,10 +89,10 @@ func (dao *GORMArticleDAO) UpdateById(ctx context.Context, article Article) erro
 			"status":  article.Status,
 		})
 	if res.Error != nil {
-		return res.Error
+		return errorx.WithCode(errcode.ErrDatabase, res.Error.Error())
 	}
 	if res.RowsAffected == 0 {
-		return errors.New("可能是非作者想來更新這篇文章")
+		return errorx.WithCode(errcode.ErrArticleNotFound, "article not found")
 	}
 	return nil
 }
@@ -121,19 +125,19 @@ func (dao *GORMArticleDAO) SyncStatus(ctx context.Context, id, authorId int64, s
 			Where("id=? AND author_id = ?", id, authorId).
 			Update("status", status)
 		if res.Error != nil {
-			return res.Error
+			return errorx.WithCode(errcode.ErrDatabase, res.Error.Error())
 		}
-		if res.RowsAffected != 1 {
-			return ErrPossibleIncorrectAuthor
+		if res.RowsAffected == 0 {
+			return errorx.WithCode(errcode.ErrArticleNotFound, "article not found")
 		}
 
 		res = tx.Model(&PublishArticle{}).
 			Where("id=? AND author_id = ?", id, authorId).Update("status", status)
 		if res.Error != nil {
-			return res.Error
+			return errorx.WithCode(errcode.ErrDatabase, res.Error.Error())
 		}
-		if res.RowsAffected != 1 {
-			return ErrPossibleIncorrectAuthor
+		if res.RowsAffected == 0 {
+			return errorx.WithCode(errcode.ErrArticleNotFound, "article not found")
 		}
 		return nil
 	})

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a MIT style
 // license that can be found in the LICENSE file.
 
-package errors
+package errorx
 
 import (
 	"errors"
@@ -14,7 +14,7 @@ type MessageCountMap map[string]int
 
 // Aggregate represents an object that contains multiple errors, but does not
 // necessarily have singular semantic meaning.
-// The aggregate can be used with `errors.Is()` to check for the occurrence of
+// The aggregate can be used with `errorx.Is()` to check for the occurrence of
 // a specific error type.
 // Errors.As() is not supported, because the caller presumably cares about a
 // specific error of potentially multiple that match the given type.

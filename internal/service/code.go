@@ -11,11 +11,6 @@ import (
 
 var codeTplId atomic.String = atomic.String{}
 
-var (
-	ErrCodeVerifyTooManyTimes = repository.ErrCodeVerifyTooManyTimes
-	ErrCodeSendTooMany        = repository.ErrCodeSendTooMany
-)
-
 type CodeService interface {
 	Send(ctx context.Context,
 		// 区别业务场景
@@ -52,16 +47,12 @@ func (svc *codeService) Send(ctx context.Context,
 	// 塞进去 Redis
 	err := svc.repo.Store(ctx, biz, phone, code)
 	if err != nil {
-		// 有问题
 		return err
 	}
-	// 这前面成功了
-
-	// 发送出去
 
 	err = svc.smsSvc.Send(ctx, codeTplId.Load(), []string{code}, phone)
 	if err != nil {
-		err = fmt.Errorf("发送短信出现异常 %w", err)
+		return err
 	}
 	//if err != nil {
 	// 这个地方怎么办？
@@ -71,7 +62,7 @@ func (svc *codeService) Send(ctx context.Context,
 	// 在这里重试
 	// 要重试的话，初始化的时候，传入一个自己就会重试的 smsSvc
 	//}
-	return err
+	return nil
 }
 
 func (svc *codeService) Verify(ctx context.Context, biz string,

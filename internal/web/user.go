@@ -6,8 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jw803/webook/internal/domain"
+	jwt2 "github.com/jw803/webook/internal/interface/web/jwtx"
+	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/internal/service"
-	ijwt "github.com/jw803/webook/internal/web/jwt"
+	"github.com/jw803/webook/pkg/errorx"
 	"net/http"
 )
 
@@ -25,11 +27,11 @@ type UserHandler struct {
 	codeSvc     service.CodeService
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
-	ijwt.Handler
+	jwt2.Handler
 }
 
 func NewUserHandler(svc service.UserService,
-	codeSvc service.CodeService, jwtHdl ijwt.Handler) *UserHandler {
+	codeSvc service.CodeService, jwtHdl jwt2.Handler) *UserHandler {
 	const (
 		emailRegexPattern    = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$"
 		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$`
@@ -88,9 +90,9 @@ func (u *UserHandler) LogoutJWT(ctx *gin.Context) {
 func (u *UserHandler) RefreshToken(ctx *gin.Context) {
 	// 只有这个接口，拿出来的才是 refresh_token，其它地方都是 access token
 	refreshToken := u.ExtractToken(ctx)
-	var rc ijwt.RefreshClaims
+	var rc jwt2.RefreshClaims
 	token, err := jwt.ParseWithClaims(refreshToken, &rc, func(token *jwt.Token) (interface{}, error) {
-		return ijwt.RtKey, nil
+		return jwt2.RtKey, nil
 	})
 	if err != nil || !token.Valid {
 		ctx.AbortWithStatus(http.StatusUnauthorized)
@@ -183,12 +185,12 @@ func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
 		return
 	}
 	err := u.codeSvc.Send(ctx, biz, req.Phone)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		ctx.JSON(http.StatusOK, Result{
 			Msg: "发送成功",
 		})
-	case service.ErrCodeSendTooMany:
+	case errorx.IsCode(err, errcode.ErrSMSCodeSendTooFrequently):
 		ctx.JSON(http.StatusOK, Result{
 			Msg: "发送太频繁，请稍后再试",
 		})
@@ -355,7 +357,7 @@ func (u *UserHandler) ProfileJWT(ctx *gin.Context) {
 	//	return
 	//}
 	// ok 代表是不是 *UserClaims
-	claims, ok := c.(*ijwt.UserClaims)
+	claims, ok := c.(*jwt2.UserClaims)
 	if !ok {
 		// 你可以考虑监控住这里
 		ctx.String(http.StatusOK, "系统错误")

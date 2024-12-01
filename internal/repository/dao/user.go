@@ -5,13 +5,15 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/go-sql-driver/mysql"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
+	"github.com/jw803/webook/pkg/loggerx"
 	"gorm.io/gorm"
 	"time"
 )
 
 var (
-	ErrUserDuplicate = errors.New("邮箱冲突")
-	ErrUserNotFound  = gorm.ErrRecordNotFound
+	ErrUserNotFound = gorm.ErrRecordNotFound
 )
 
 type UserDAO interface {
@@ -20,10 +22,12 @@ type UserDAO interface {
 	FindByPhone(ctx context.Context, phone string) (Users, error)
 	Insert(ctx context.Context, u Users) error
 	FindByWechat(ctx context.Context, openID string) (Users, error)
+	UpdateExtraInfoById(ctx context.Context, id int64, u Users) error
 }
 
 type GORMUserDAO struct {
 	db *gorm.DB
+	l  loggerx.Logger
 }
 
 func NewGORMUserDAO(db *gorm.DB) UserDAO {
@@ -49,14 +53,29 @@ func (dao *GORMUserDAO) FindByWechat(ctx context.Context, openID string) (Users,
 func (dao *GORMUserDAO) FindByEmail(ctx context.Context, email string) (Users, error) {
 	var u Users
 	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
-	//err := dao.db.WithContext(ctx).First(&u, "email = ?", email).Error
-	return u, err
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		dao.l.Error(ctx, "user not found", loggerx.Error(err))
+		return u, errorx.WithCode(errcode.ErrUserNotFound, err.Error())
+	}
+	if err != nil {
+		dao.l.Error(ctx, "db error", loggerx.Error(err))
+		return u, errorx.WithCode(errcode.ErrDatabase, err.Error())
+	}
+	return u, nil
 }
 
 func (dao *GORMUserDAO) FindByPhone(ctx context.Context, phone string) (Users, error) {
 	var u Users
 	err := dao.db.WithContext(ctx).Where("phone = ?", phone).First(&u).Error
-	//err := dao.db.WithContext(ctx).First(&u, "email = ?", email).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		dao.l.Error(ctx, "user not found", loggerx.Error(err))
+		return u, errorx.WithCode(errcode.ErrUserNotFound, err.Error())
+	}
+	if err != nil {
+		dao.l.Error(ctx, "db error", loggerx.Error(err))
+		return u, errorx.WithCode(errcode.ErrDatabase, err.Error())
+	}
+	return u, nil
 	return u, err
 }
 
@@ -67,19 +86,37 @@ func (dao *GORMUserDAO) FindById(ctx context.Context, id int64) (Users, error) {
 }
 
 func (dao *GORMUserDAO) Insert(ctx context.Context, u Users) error {
-	// 存毫秒数
 	now := time.Now().UnixMilli()
 	u.Utime = now
 	u.Ctime = now
 	err := dao.db.WithContext(ctx).Create(&u).Error
-	if mysqlErr, ok := err.(*mysql.MySQLError); ok {
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) {
 		const uniqueConflictsErrNo uint16 = 1062
 		if mysqlErr.Number == uniqueConflictsErrNo {
-			// 邮箱冲突 or 手机号码冲突
-			return ErrUserDuplicate
+			return errorx.WithCode(errcode.ErrUserDuplicated, "email has already been registered")
 		}
 	}
 	return err
+}
+
+func (dao *GORMUserDAO) UpdateExtraInfoById(ctx context.Context, id int64, u Users) error {
+	now := time.Now().UnixMilli()
+	u.Utime = now
+	u.Ctime = now
+	res := dao.db.WithContext(ctx).Where("id = ?", id).
+		Updates(map[string]any{
+			"nick_name": u.NickName,
+			"birthday":  u.Birthday,
+			"intro":     u.Intro,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return errorx.WithCode(errcode.ErrUserNotFound, "user % not found", id)
+	}
+	return nil
 }
 
 // Users 直接对应数据库表结构
@@ -99,6 +136,9 @@ type Users struct {
 	//Phone *string
 
 	// 往这面加
+	NickName string
+	Birthday string
+	Intro    string
 
 	// 索引的最左匹配原则：
 	// 假如索引在 <A, B, C> 建好了

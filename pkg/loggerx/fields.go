@@ -1,4 +1,4 @@
-package logging
+package loggerx
 
 func String(key, val string) Field {
 	return Field{

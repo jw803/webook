@@ -1,19 +1,26 @@
-package response
+package ginx
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jw803/webook/pkg/errorx"
+	"net/http"
 )
 
-type Result struct {
-	Code int    `json:"code"`
-	Msg  string `json:"message"`
-	Data any    `json:"data"`
+type Response struct {
+	Code      int         `json:"code,omitempty"`
+	Message   string      `json:"message,omitempty"`
+	Reference string      `json:"reference,omitempty"`
+	Data      interface{} `json:"data,omitempty"`
 }
 
-func SendResponse(ctx *gin.Context, info *Response, data any) {
-	res := Result{}
-	res.Code = info.Code()
-	res.Msg = info.Msg()
-	res.Data = data
-	ctx.JSON(info.HttpStatusCode(), res)
+func WriteResponse(c *gin.Context, err error, data any) {
+	if err != nil {
+		coder := errorx.ParseCoder(err)
+		c.JSON(coder.HTTPStatus(), Response{
+			Code:    coder.Code(),
+			Message: coder.Reference(),
+			Data:    data,
+		})
+	}
+	c.JSON(http.StatusOK, Response{Data: data})
 }

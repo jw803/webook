@@ -10,8 +10,7 @@ import (
 )
 
 var (
-	ErrUserDuplicate = dao.ErrUserDuplicate
-	ErrUserNotFound  = dao.ErrUserNotFound
+	ErrUserNotFound = dao.ErrUserNotFound
 )
 
 // UserRepository 是核心，它有不同实现。
@@ -22,6 +21,7 @@ type UserRepository interface {
 	Create(ctx context.Context, u domain.User) error
 	FindById(ctx context.Context, id int64) (domain.User, error)
 	FindByWechat(ctx context.Context, openID string) (domain.User, error)
+	EditExtraInfo(ctx context.Context, u domain.User) error
 }
 
 type CachedUserRepository struct {
@@ -109,7 +109,6 @@ func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.U
 	// 缓存里面有数据
 	// 缓存里面没有数据
 	// 缓存出错了，你也不知道有没有数据
-
 }
 
 func (r *CachedUserRepository) domainToEntity(u domain.User) dao.Users {
@@ -149,4 +148,12 @@ func (r *CachedUserRepository) entityToDomain(u dao.Users) domain.User {
 		},
 		Ctime: time.UnixMilli(u.Ctime),
 	}
+}
+
+func (r *CachedUserRepository) EditExtraInfo(ctx context.Context, u domain.User) error {
+	return r.dao.UpdateExtraInfoById(ctx, u.Id, dao.Users{
+		NickName: u.NickName,
+		Birthday: u.Birthday,
+		Intro:    u.Intro,
+	})
 }

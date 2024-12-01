@@ -5,10 +5,10 @@ import (
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/domain"
+	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/service"
-	ijwt "github.com/jw803/webook/internal/web/jwt"
-	"github.com/jw803/webook/pkg/ginx"
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/ginx_old"
+	"github.com/jw803/webook/pkg/loggerx"
 	"golang.org/x/sync/errgroup"
 	"net/http"
 	"strconv"
@@ -19,10 +19,10 @@ var _ handler = (*ArticleHandler)(nil)
 
 type ArticleHandler struct {
 	svc service.ArticleService
-	l   logger.LoggerV1
+	l   loggerx.LoggerV1
 }
 
-func NewArticleHandler(svc service.ArticleService, l logger.LoggerV1) *ArticleHandler {
+func NewArticleHandler(svc service.ArticleService, l loggerx.LoggerV1) *ArticleHandler {
 	return &ArticleHandler{
 		svc: svc,
 		l:   l,
@@ -35,22 +35,11 @@ func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 	ug.POST("/publish", h.Publish)
 	ug.POST("/withdraw", h.Withdraw)
 	ug.POST("/list",
-		ginx.WrapBodyAndToken[ListReq, ijwt.UserClaims](h.List))
-	ug.GET("/detail/:id", ginx.WrapToken[ijwt.UserClaims](h.Detail))
+		ginx_old.WrapBodyAndToken[ListReq, ijwt.UserClaims](h.List))
+	ug.GET("/detail/:id", ginx_old.WrapToken[ijwt.UserClaims](h.Detail))
 
 	pub := ug.Group("/pub")
-	pub.GET("/:id", h.PubDetail, func(ctx *gin.Context) {
-		// 增加阅读计数。
-		//go func() {
-		//	// 开一个 goroutine，异步去执行
-		//	er := a.intrSvc.IncrReadCnt(ctx, a.biz, art.Id)
-		//	if er != nil {
-		//		a.l.Error("增加阅读计数失败",
-		//			logger.Int64("aid", art.Id),
-		//			logger.Error(err))
-		//	}
-		//}()
-	})
+	pub.GET("/:id", h.PubDetail)
 }
 
 func (h *ArticleHandler) Edit(ctx *gin.Context) {
@@ -73,7 +62,7 @@ func (h *ArticleHandler) Edit(ctx *gin.Context) {
 			Code: 5,
 			Msg:  "系統錯誤",
 		})
-		h.l.Error("保存失敗", logger.Error(err))
+		h.l.Error("保存失敗", loggerx.Error(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, Result{
@@ -102,7 +91,7 @@ func (h *ArticleHandler) Publish(ctx *gin.Context) {
 			Code: 5,
 			Msg:  "系統錯誤",
 		})
-		h.l.Error("發表失敗", logger.Error(err))
+		h.l.Error("發表失敗", loggerx.Error(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, Result{
@@ -114,7 +103,7 @@ func (h *ArticleHandler) Publish(ctx *gin.Context) {
 func (a *ArticleHandler) Withdraw(ctx *gin.Context) {
 	var req ArticleReq
 	if err := ctx.Bind(&req); err != nil {
-		a.l.Error("反序列化请求失败", logger.Error(err))
+		a.l.Error("反序列化请求失败", loggerx.Error(err))
 		return
 	}
 	claims, ok := ctx.MustGet("user").(ijwt.UserClaims)
@@ -133,8 +122,8 @@ func (a *ArticleHandler) Withdraw(ctx *gin.Context) {
 		},
 	})
 	if err != nil {
-		a.l.Error("设置为尽自己可见失败", logger.Error(err),
-			logger.Field{Key: "id", Value: req.Id})
+		a.l.Error("设置为尽自己可见失败", loggerx.Error(err),
+			loggerx.Field{Key: "id", Value: req.Id})
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
 			Msg:  "系统错误",
@@ -146,10 +135,10 @@ func (a *ArticleHandler) Withdraw(ctx *gin.Context) {
 	})
 }
 
-func (h *ArticleHandler) List(ctx *gin.Context, req ListReq, uc ijwt.UserClaims) (ginx.Result, error) {
+func (h *ArticleHandler) List(ctx *gin.Context, req ListReq, uc ijwt.UserClaims) (ginx_old.Result, error) {
 	res, err := h.svc.List(ctx, uc.Uid, req.Offset, req.Limit)
 	if err != nil {
-		return ginx.Result{
+		return ginx_old.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		}, nil
@@ -157,7 +146,7 @@ func (h *ArticleHandler) List(ctx *gin.Context, req ListReq, uc ijwt.UserClaims)
 	// 在列表页，不显示全文，只显示一个"摘要"
 	// 比如说，简单的摘要就是前几句话
 	// 强大的摘要是 AI 帮你生成的
-	return ginx.Result{
+	return ginx_old.Result{
 		Data: slice.Map[domain.Article, ArticleVO](res,
 			func(idx int, src domain.Article) ArticleVO {
 				return ArticleVO{
@@ -184,7 +173,7 @@ func (a *ArticleHandler) PubDetail(ctx *gin.Context) {
 			Code: 4,
 			Msg:  "参数错误",
 		})
-		a.l.Error("前端输入的 ID 不对", logger.Error(err))
+		a.l.Error("前端输入的 ID 不对", loggerx.Error(err))
 		return
 	}
 
@@ -225,13 +214,13 @@ func (a *ArticleHandler) PubDetail(ctx *gin.Context) {
 	})
 }
 
-func (a *ArticleHandler) Detail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.Result, error) {
+func (a *ArticleHandler) Detail(ctx *gin.Context, usr ijwt.UserClaims) (ginx_old.Result, error) {
 	idstr := ctx.Param("id")
 	id, err := strconv.ParseInt(idstr, 10, 64)
 	if err != nil {
 		//ctx.JSON(http.StatusOK, )
 		//a.l.Error("前端输入的 ID 不对", logger.Error(err))
-		return ginx.Result{
+		return ginx_old.Result{
 			Code: 4,
 			Msg:  "参数错误",
 		}, err
@@ -240,7 +229,7 @@ func (a *ArticleHandler) Detail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.Res
 	if err != nil {
 		//ctx.JSON(http.StatusOK, )
 		//a.l.Error("获得文章信息失败", logger.Error(err))
-		return ginx.Result{
+		return ginx_old.Result{
 			Code: 5,
 			Msg:  "系统错误",
 		}, err
@@ -251,13 +240,13 @@ func (a *ArticleHandler) Detail(ctx *gin.Context, usr ijwt.UserClaims) (ginx.Res
 		// 如果公司有风控系统，这个时候就要上报这种非法访问的用户了。
 		//a.l.Error("非法访问文章，创作者 ID 不匹配",
 		//	logger.Int64("uid", usr.Id))
-		return ginx.Result{
+		return ginx_old.Result{
 			Code: 4,
 			// 也不需要告诉前端究竟发生了什么
 			Msg: "输入有误",
 		}, fmt.Errorf("非法访问文章，创作者 ID 不匹配 %d", usr.Uid)
 	}
-	return ginx.Result{
+	return ginx_old.Result{
 		Data: ArticleVO{
 			Id:    art.Id,
 			Title: art.Title,

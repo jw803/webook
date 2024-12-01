@@ -1,4 +1,4 @@
-package errors
+package errorx
 
 import (
 	"errors"
@@ -276,7 +276,7 @@ func TestWithCodef(t *testing.T) {
 	}
 }
 
-// errors.New, etc values are not expected to be compared by value
+// errorx.New, etc values are not expected to be compared by value
 // but the change in errors#27 made them incomparable. Assert that
 // various kinds of errors have a functional equality operator, even
 // if the result of that equality is always false.

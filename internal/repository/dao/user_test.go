@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-sql-driver/mysql"
+	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	gormMysql "gorm.io/driver/mysql"
@@ -21,8 +22,9 @@ func TestGORMUserDAO_Insert(t *testing.T) {
 		ctx  context.Context
 		user Users
 
-		wantErr error
-		wantId  int64
+		wantErr     error
+		wantErrCode int
+		wantId      int64
 	}{
 		{
 			name: "插入成功",
@@ -52,8 +54,8 @@ func TestGORMUserDAO_Insert(t *testing.T) {
 				require.NoError(t, err)
 				return mockDB
 			},
-			user:    Users{},
-			wantErr: ErrUserDuplicate,
+			user:        Users{},
+			wantErrCode: errcode.ErrUserDuplicated,
 		},
 		{
 			name: "数据库错误",

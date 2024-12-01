@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/jw803/webook/internal/domain"
 	"github.com/jw803/webook/internal/repository/article"
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/loggerx"
 	"time"
 )
 
@@ -27,7 +27,7 @@ type articleService struct {
 	// v1
 	authorRepo article.ArticleAuthorRepository
 	readerRepo article.ArticleReaderRepository
-	l          logger.LoggerV1
+	l          loggerx.Logger
 }
 
 func NewArticleService(repo article.ArticleRepository) ArticleService {
@@ -37,7 +37,7 @@ func NewArticleService(repo article.ArticleRepository) ArticleService {
 }
 
 func NewArticleServiceV1(authorRepo article.ArticleAuthorRepository, readerRepo article.ArticleReaderRepository,
-	l logger.LoggerV1) ArticleService {
+	l loggerx.Logger) ArticleService {
 	return &articleService{
 		authorRepo: authorRepo,
 		readerRepo: readerRepo,
@@ -80,12 +80,12 @@ func (a *articleService) PublishV1(ctx context.Context, article domain.Article) 
 		if err == nil {
 			break
 		}
-		a.l.Error("部分失敗，保存到線上庫失敗", logger.Int64("art_id", article.Id),
-			logger.Error(err))
+		a.l.Error(ctx, "部分失敗，保存到線上庫失敗", loggerx.Int64("art_id", article.Id),
+			loggerx.Error(err))
 	}
 	if err != nil {
-		a.l.Error("部分失敗，保存到線上庫的重試全部失敗", logger.Int64("art_id", article.Id),
-			logger.Error(err))
+		a.l.Error(ctx, "部分失敗，保存到線上庫的重試全部失敗", loggerx.Int64("art_id", article.Id),
+			loggerx.Error(err))
 		return 0, err
 	}
 	return id, err

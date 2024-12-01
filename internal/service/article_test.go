@@ -6,7 +6,7 @@ import (
 	"github.com/jw803/webook/internal/domain"
 	"github.com/jw803/webook/internal/repository/article"
 	repoarticlemocks "github.com/jw803/webook/internal/repository/article/mocks"
-	"github.com/jw803/webook/pkg/logger"
+	"github.com/jw803/webook/pkg/loggerx"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"testing"
@@ -203,7 +203,7 @@ func Test_articleService_Publish(t *testing.T) {
 			defer ctrl.Finish()
 
 			authorRepo, readerRepo := tc.mock(ctrl)
-			svc := NewArticleServiceV1(authorRepo, readerRepo, logger.NewNoOpLogger())
+			svc := NewArticleServiceV1(authorRepo, readerRepo, loggerx.NewNoOpLogger())
 			id, err := svc.PublishV1(tc.ctx, tc.article)
 
 			assert.Equal(t, tc.wantId, id)
