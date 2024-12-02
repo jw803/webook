@@ -5,8 +5,8 @@ import (
 	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 )
 
-func (u *UserHandler) LogoutJWT(ctx *gin.Context, claim *ijwt.UserClaims) (any, error) {
-	err := u.ClearToken(ctx, claim)
+func (h *UserHandler) LogoutJWT(ctx *gin.Context, claim *ijwt.UserClaims) (any, error) {
+	err := h.ClearToken(ctx, claim)
 	if err != nil {
 		return nil, err
 	}

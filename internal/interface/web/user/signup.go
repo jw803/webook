@@ -14,32 +14,32 @@ type signUpReq struct {
 	Password        string `json:"password"`
 }
 
-func (u *UserHandler) SignUp(ctx *gin.Context, req signUpReq) (any, error) {
+func (h *UserHandler) SignUp(ctx *gin.Context, req signUpReq) (any, error) {
 	if req.ConfirmPassword != req.Password {
-		u.l.P3(ctx, "the password and the confirmation password do not match")
+		h.l.P3(ctx, "the password and the confirmation password do not match")
 		return nil, errorx.WithCode(errcode.ErrPasswordNotMatch,
 			"the password and the confirmation password do not match")
 	}
-	ok, err := u.passwordExp.MatchString(req.Password)
+	ok, err := h.passwordExp.MatchString(req.Password)
 	if err != nil {
-		u.l.P1(ctx, "failed to validate password", loggerx.Error(err))
+		h.l.P1(ctx, "failed to validate password", loggerx.Error(err))
 		return nil, errorx.WithCode(errcode.ErrSystem, "failed to validate password")
 	}
 	if !ok {
-		u.l.P3(ctx, "invalid password")
+		h.l.P3(ctx, "invalid password")
 		return nil, errorx.WithCode(errcode.ErrInvalidPassword, "invalid password")
 	}
 
-	err = u.svc.SignUp(ctx, domain.User{
+	err = h.svc.SignUp(ctx, domain.User{
 		Email:    req.Email,
 		Password: req.Password,
 	})
 	if errorx.IsCode(err, errcode.ErrUserDuplicated) {
-		u.l.P3(ctx, "duplicate email", loggerx.Error(err))
+		h.l.P3(ctx, "duplicate email", loggerx.Error(err))
 		return nil, err
 	}
 	if err != nil {
-		u.l.P1(ctx, "failed to sign up", loggerx.Error(err))
+		h.l.P1(ctx, "failed to sign up", loggerx.Error(err))
 		return nil, err
 	}
 

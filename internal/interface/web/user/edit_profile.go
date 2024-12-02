@@ -14,19 +14,19 @@ type userEditReq struct {
 	Intro    string `json:"intro" validate:"required,max=60"`
 }
 
-func (u *UserHandler) Edit(ctx *gin.Context, req userEditReq) (any, error) {
-	err := u.svc.EditExtraInfo(ctx, domain.User{
+func (h *UserHandler) Edit(ctx *gin.Context, req userEditReq) (any, error) {
+	err := h.svc.EditExtraInfo(ctx, domain.User{
 		Id:       req.Id,
 		NickName: req.NickName,
 		Birthday: req.Birthday,
 		Intro:    req.Intro,
 	})
 	if errorx.IsCode(err, errcode.ErrUserNotFound) {
-		u.l.P2(ctx, "It may be an update by a malicious user")
+		h.l.P2(ctx, "It may be an update by a malicious user")
 		return nil, err
 	}
 	if err != nil {
-		u.l.P1(ctx, "It may be an update by a malicious user")
+		h.l.P1(ctx, "failed to edit user profile")
 		return nil, err
 	}
 	return nil, nil

@@ -15,26 +15,26 @@ type loginReq struct {
 	Password string `json:"password" validate:"required,len=10"`
 }
 
-func (u *UserHandler) LoginJWT(ctx *gin.Context, req loginReq) (any, error) {
-	user, err := u.svc.Login(ctx, req.Email, req.Password)
+func (h *UserHandler) LoginJWT(ctx *gin.Context, req loginReq) (any, error) {
+	user, err := h.svc.Login(ctx, req.Email, req.Password)
 	if errorx.IsCode(err, errcode.ErrInvalidUserNameOrPassword) {
-		u.l.P3(ctx, "invalid username aor password", loggerx.Error(err))
+		h.l.P3(ctx, "invalid username aor password", loggerx.Error(err))
 		return nil, err
 	}
 	if err != nil {
-		u.l.P1(ctx, "failed to login with jwt", loggerx.Error(err))
+		h.l.P1(ctx, "failed to login with jwt", loggerx.Error(err))
 		return nil, err
 	}
 
-	if err = u.SetLoginToken(ctx, user.Id); err != nil {
-		u.l.P1(ctx, "failed to set login token", loggerx.Error(err))
+	if err = h.SetLoginToken(ctx, user.Id); err != nil {
+		h.l.P1(ctx, "failed to set login token", loggerx.Error(err))
 		return nil, err
 	}
 
 	return nil, nil
 }
 
-func (u *UserHandler) Login(ctx *gin.Context) {
+func (h *UserHandler) Login(ctx *gin.Context) {
 	type LoginReq struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -44,7 +44,7 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 	if err := ctx.Bind(&req); err != nil {
 		return
 	}
-	user, err := u.svc.Login(ctx, req.Email, req.Password)
+	user, err := h.svc.Login(ctx, req.Email, req.Password)
 	if err == service.ErrInvalidUserOrPassword {
 		ctx.String(http.StatusOK, "用户名或密码不对")
 		return

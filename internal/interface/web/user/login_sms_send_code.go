@@ -11,16 +11,16 @@ type loginSMSSendCodeReq struct {
 	Phone string `json:"phone"`
 }
 
-func (u *UserHandler) SendLoginSMSCode(ctx *gin.Context, req loginSMSSendCodeReq) (any, error) {
-	err := u.codeSvc.Send(ctx, biz, req.Phone)
+func (h *UserHandler) SendLoginSMSCode(ctx *gin.Context, req loginSMSSendCodeReq) (any, error) {
+	err := h.codeSvc.Send(ctx, biz, req.Phone)
 	switch {
 	case err == nil:
 		return nil, nil
 	case errorx.IsCode(err, errcode.ErrSMSCodeSendTooFrequently):
-		u.l.P3(ctx, "client send sms code too frequently", loggerx.Error(err))
+		h.l.P3(ctx, "client send sms code too frequently", loggerx.Error(err))
 		return nil, err
 	default:
-		u.l.P1(ctx, "failed to send sms code", loggerx.Error(err))
+		h.l.P1(ctx, "failed to send sms code", loggerx.Error(err))
 		return nil, err
 	}
 }

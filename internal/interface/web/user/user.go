@@ -37,16 +37,16 @@ func NewUserHandler(svc service.UserService,
 	}
 }
 
-func (u *UserHandler) RegisterRoutes(server *gin.Engine) {
+func (h *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
-	ug.POST("/signup", ginx.WrapReq[signUpReq](u.SignUp))
-	ug.POST("/login", ginx.WrapReq[loginReq](u.LoginJWT)
-	ug.POST("/logout", ginx.WrapClaim[ijwt.UserClaims](u.LogoutJWT))
+	ug.POST("/signup", ginx.WrapReq[signUpReq](h.SignUp))
+	ug.POST("/login", ginx.WrapReq[loginReq](h.LoginJWT)
+	ug.POST("/logout", ginx.WrapClaim[ijwt.UserClaims](h.LogoutJWT))
 
-	ug.POST("/login_sms/code/send", ginx.WrapReq[loginSMSSendCodeReq](u.SendLoginSMSCode))
-	ug.POST("/login_sms", ginx.WrapReq[loginSMSReq](u.LoginSMS))
-	ug.POST("/refresh_token", ginx.Wrap(u.RefreshToken)
+	ug.POST("/login_sms/code/send", ginx.WrapReq[loginSMSSendCodeReq](h.SendLoginSMSCode))
+	ug.POST("/login_sms", ginx.WrapReq[loginSMSReq](h.LoginSMS))
+	ug.POST("/refresh_token", ginx.Wrap(h.RefreshToken)
 
-	ug.GET("/profile", ginx.WrapClaim[ijwt.UserClaims](u.ProfileJWT))
-	ug.POST("/edit", ginx.WrapReq[userEditReq](u.Edit))
+	ug.GET("/profile", ginx.WrapClaim[ijwt.UserClaims](h.ProfileJWT))
+	ug.POST("/edit", ginx.WrapReq[userEditReq](h.Edit))
 }
