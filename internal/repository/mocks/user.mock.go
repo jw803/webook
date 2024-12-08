@@ -5,6 +5,7 @@
 //
 //	mockgen -source=internal/repository/user.go -package=repomocks -destination=internal/repository/mocks/user.mock.go
 //
+
 // Package repomocks is a generated GoMock package.
 package repomocks
 
@@ -51,6 +52,20 @@ func (m *MockUserRepository) Create(ctx context.Context, u domain.User) error {
 func (mr *MockUserRepositoryMockRecorder) Create(ctx, u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), ctx, u)
+}
+
+// EditExtraInfo mocks base method.
+func (m *MockUserRepository) EditExtraInfo(ctx context.Context, u domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EditExtraInfo", ctx, u)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EditExtraInfo indicates an expected call of EditExtraInfo.
+func (mr *MockUserRepositoryMockRecorder) EditExtraInfo(ctx, u any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditExtraInfo", reflect.TypeOf((*MockUserRepository)(nil).EditExtraInfo), ctx, u)
 }
 
 // FindByEmail mocks base method.

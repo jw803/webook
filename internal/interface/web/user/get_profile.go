@@ -2,7 +2,7 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 )
 
 type Profile struct {
@@ -12,7 +12,7 @@ type Profile struct {
 	Birthday string
 }
 
-func (h *UserHandler) ProfileJWT(ctx *gin.Context, uc *ijwt.UserClaims) (any, error) {
+func (h *UserHandler) ProfileJWT(ctx *gin.Context, uc *jwtx.UserClaims) (any, error) {
 	u, err := h.svc.Profile(ctx, uc.Uid)
 	if err != nil {
 		h.l.P1(ctx, "failed to get user profile")

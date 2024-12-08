@@ -5,6 +5,7 @@
 //
 //	mockgen -package=redismocks -destination=internal/repository/cache/redismocks/cmdable.mock.go github.com/redis/go-redis/v9 Cmdable
 //
+
 // Package redismocks is a generated GoMock package.
 package redismocks
 

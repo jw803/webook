@@ -3,8 +3,8 @@ package user
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/pkg/errcode"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/pkg/errorx"
 	"github.com/jw803/webook/pkg/loggerx"
 )

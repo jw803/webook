@@ -3,66 +3,61 @@ package auth_guard
 import (
 	"errors"
 	"fmt"
-	"net/http"
-	"time"
-
 	"github.com/emirpasic/gods/v2/sets"
 	"github.com/emirpasic/gods/v2/sets/hashset"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/config"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/ginx"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/ginx/jwt_handler"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/ginx/response"
+	"github.com/jw803/webook/config"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/internal/pkg/ginx"
+	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
+	"github.com/jw803/webook/pkg/errorx"
+	"github.com/jw803/webook/pkg/loggerx"
 )
+
+type Claims struct {
+	jwt.RegisteredClaims
+}
 
 type JWTAuthzMiddlewareBuilder struct {
 	publicPaths sets.Set[string]
 	jwt_handler.JWTHandler
+	l loggerx.Logger
 }
 
-func NewJWTAuthzHandler(jwtHandler jwt_handler.JWTHandler) *JWTAuthzMiddlewareBuilder {
+func NewJWTAuthzHandler(jwtHandler jwt_handler.JWTHandler, l loggerx.Logger) *JWTAuthzMiddlewareBuilder {
 	return &JWTAuthzMiddlewareBuilder{
 		publicPaths: hashset.New[string](),
 		JWTHandler:  jwtHandler,
+		l:           l,
 	}
 }
 
-func (l *JWTAuthzMiddlewareBuilder) IgnorePaths(path string) *JWTAuthzMiddlewareBuilder {
-	l.publicPaths.Add(path)
-	return l
+func (b *JWTAuthzMiddlewareBuilder) IgnorePaths(path string) *JWTAuthzMiddlewareBuilder {
+	b.publicPaths.Add(path)
+	return b
 }
 
-func (m *JWTAuthzMiddlewareBuilder) Build() gin.HandlerFunc {
+func (b *JWTAuthzMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		if m.publicPaths.Contains(ctx.Request.URL.Path) {
+		if b.publicPaths.Contains(ctx.Request.URL.Path) {
 			return
 		}
-
-		authToken := m.ExtractTokenString(ctx)
-		sc := ginx.ShoplineClaims{}
-
-		token, err := jwt.ParseWithClaims(authToken, &sc, func(token *jwt.Token) (any, error) {
+		authToken := b.ExtractTokenString(ctx)
+		c := Claims{}
+		token, err := jwt.ParseWithClaims(authToken, &c, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				b.l.P3(ctx, "invalid token")
 				return nil, fmt.Errorf("%w: %s", errors.New(""), token.Header["alg"])
 			}
-			return []byte(config.Get().ClientSecretKey), nil
+			return []byte(config.Get().APPSecretKey), nil
 		})
 		if err != nil || !token.Valid {
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
+			ginx.WriteResponse(ctx, errorx.WithCode(errcode.ErrTokenInvalid, "invalid token"), "")
 			ctx.Abort()
 			return
 		}
-		if time.Unix(int64(sc.Exp), 0).Before(time.Now()) && authToken != config.Get().SmokeTestToken {
-			res := response.NewResponse(403000, http.StatusForbidden, "Not Authorized.")
-			response.SendResponse(ctx, res, nil)
-			ctx.Abort()
-			return
-		}
-
-		ctx.Set("shopline", sc)
+		ctx.Set("claim", c)
 		ctx.Next()
 	}
 }

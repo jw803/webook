@@ -2,10 +2,10 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 )
 
-func (h *UserHandler) LogoutJWT(ctx *gin.Context, claim *ijwt.UserClaims) (any, error) {
+func (h *UserHandler) LogoutJWT(ctx *gin.Context, claim *jwtx.UserClaims) (any, error) {
 	err := h.ClearToken(ctx, claim)
 	if err != nil {
 		return nil, err

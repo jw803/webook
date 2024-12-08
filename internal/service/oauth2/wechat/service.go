@@ -21,12 +21,12 @@ type service struct {
 	appId     string
 	appSecret string
 	client    *http.Client
-	logger    loggerx.LoggerV1
+	logger    loggerx.Logger
 }
 
 // 不偷懒的写法
 func NewServiceV1(appId string, appSecret string, client *http.Client,
-	logger loggerx.LoggerV1) Service {
+	logger loggerx.Logger) Service {
 	return &service{
 		appId:     appId,
 		appSecret: appSecret,
@@ -36,7 +36,7 @@ func NewServiceV1(appId string, appSecret string, client *http.Client,
 }
 
 func NewService(appId string, appSecret string,
-	logger loggerx.LoggerV1) Service {
+	logger loggerx.Logger) Service {
 	return &service{
 		appId:     appId,
 		appSecret: appSecret,

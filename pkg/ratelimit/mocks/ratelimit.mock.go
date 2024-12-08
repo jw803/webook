@@ -5,6 +5,7 @@
 //
 //	mockgen -source=pkg/ratelimit/types.go -package=limitmocks -destination=pkg/ratelimit/mocks/ratelimit.mock.go
 //
+
 // Package limitmocks is a generated GoMock package.
 package limitmocks
 

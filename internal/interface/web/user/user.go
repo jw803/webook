@@ -4,8 +4,8 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/interface/web"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/pkg/ginx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/service"
 	"github.com/jw803/webook/pkg/loggerx"
 )
@@ -18,12 +18,12 @@ type UserHandler struct {
 	svc         service.UserService
 	codeSvc     service.CodeService
 	passwordExp *regexp.Regexp
-	ijwt.Handler
+	jwtx.Handler
 	l loggerx.Logger
 }
 
 func NewUserHandler(svc service.UserService,
-	codeSvc service.CodeService, jwtHdl ijwt.Handler, l loggerx.Logger) *UserHandler {
+	codeSvc service.CodeService, jwtHdl jwtx.Handler, l loggerx.Logger) *UserHandler {
 	const (
 		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$`
 	)
@@ -40,13 +40,13 @@ func NewUserHandler(svc service.UserService,
 func (h *UserHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/users")
 	ug.POST("/signup", ginx.WrapReq[signUpReq](h.SignUp))
-	ug.POST("/login", ginx.WrapReq[loginReq](h.LoginJWT)
-	ug.POST("/logout", ginx.WrapClaim[ijwt.UserClaims](h.LogoutJWT))
+	ug.POST("/login", ginx.WrapReq[loginReq](h.LoginJWT))
+	ug.POST("/logout", ginx.WrapClaim[jwtx.UserClaims](h.LogoutJWT))
 
 	ug.POST("/login_sms/code/send", ginx.WrapReq[loginSMSSendCodeReq](h.SendLoginSMSCode))
 	ug.POST("/login_sms", ginx.WrapReq[loginSMSReq](h.LoginSMS))
-	ug.POST("/refresh_token", ginx.Wrap(h.RefreshToken)
+	ug.POST("/refresh_token", ginx.Wrap(h.RefreshToken))
 
-	ug.GET("/profile", ginx.WrapClaim[ijwt.UserClaims](h.ProfileJWT))
+	ug.GET("/profile", ginx.WrapClaim[jwtx.UserClaims](h.ProfileJWT))
 	ug.POST("/edit", ginx.WrapReq[userEditReq](h.Edit))
 }

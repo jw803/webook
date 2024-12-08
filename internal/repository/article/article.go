@@ -76,7 +76,7 @@ func (repo *CachedArticleRepository) preCache(ctx context.Context, data []domain
 	if len(data) > 0 && len(data[0].Content) < 1024*1024 {
 		err := repo.cache.Set(ctx, data[0])
 		if err != nil {
-			repo.l.Error("提前预加载缓存失败", loggerx.Error(err))
+			repo.l.Error(ctx, "提前预加载缓存失败", loggerx.Error(err))
 		}
 	}
 }
@@ -191,7 +191,7 @@ func (repo *CachedArticleRepository) GetPublishedById(
 		Content: art.Content,
 		Author: domain.Author{
 			Id:   usr.Id,
-			Name: usr.Nickname,
+			Name: usr.NickName,
 		},
 		Ctime: time.UnixMilli(art.Ctime),
 		Utime: time.UnixMilli(art.Utime),
@@ -230,7 +230,7 @@ func (repo *CachedArticleRepository) List(ctx context.Context, uid int64, offset
 	// 回写缓存的时候，可以同步，也可以异步
 	go func() {
 		err := repo.cache.SetFirstPage(ctx, uid, data)
-		repo.l.Error("回写缓存失败", loggerx.Error(err))
+		repo.l.Error(ctx, "回写缓存失败", loggerx.Error(err))
 		repo.preCache(ctx, data)
 	}()
 	return data, nil

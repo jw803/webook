@@ -5,6 +5,7 @@
 //
 //	mockgen -source=internal/repository/article/article_author.go -package=repoarticlemocks -destination=internal/repository/article/mocks/article_author.mock.go
 //
+
 // Package repoarticlemocks is a generated GoMock package.
 package repoarticlemocks
 

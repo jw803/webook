@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func InitLogger() loggerx.LoggerV1 {
+func InitLogger() loggerx.Logger {
 	cfg := zap.NewDevelopmentConfig()
 	err := viper.UnmarshalKey("log", &cfg)
 	if err != nil {

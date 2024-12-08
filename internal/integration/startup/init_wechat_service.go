@@ -6,6 +6,6 @@ import (
 )
 
 // InitPhantomWechatService 没啥用的虚拟的 wechatService
-func InitPhantomWechatService(l loggerx.LoggerV1) wechat.Service {
+func InitPhantomWechatService(l loggerx.Logger) wechat.Service {
 	return wechat.NewService("", "", l)
 }

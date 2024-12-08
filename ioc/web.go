@@ -4,31 +4,28 @@ import (
 	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
-	"github.com/jw803/webook/internal/web"
-	"github.com/jw803/webook/internal/web/middleware"
-	"github.com/jw803/webook/pkg/ginx_old/middlewares/accesslog"
+	articlehdl "github.com/jw803/webook/internal/interface/web/article"
+	userhdl "github.com/jw803/webook/internal/interface/web/user"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
+	"github.com/jw803/webook/internal/pkg/ginx/middlewares/access_log"
+	"github.com/jw803/webook/internal/pkg/ginx/middlewares/auth_guard"
 	"github.com/jw803/webook/pkg/loggerx"
-	"github.com/redis/go-redis/v9"
 	"strings"
 	"time"
 )
 
-func InitWebServer(mdls []gin.HandlerFunc, userHdl *web.UserHandler,
-	oauth2WechatHdl *web.OAuth2WechatHandler, articleHdl *web.ArticleHandler) *gin.Engine {
+func InitWebServer(mdls []gin.HandlerFunc, userHdl *userhdl.UserHandler, articleHdl *articlehdl.ArticleHandler) *gin.Engine {
 	server := gin.Default()
 	server.Use(mdls...)
 	userHdl.RegisterRoutes(server)
-	oauth2WechatHdl.RegisterRoutes(server)
 	articleHdl.RegisterRoutes(server)
 	return server
 }
 
-func GinMiddlewares(redisClient redis.Cmdable,
-	jwtHdl ijwt.Handler, l loggerx.LoggerV1) []gin.HandlerFunc {
+func GinMiddlewares(jwtHdl jwtx.Handler, l loggerx.Logger) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
-		middleware.NewLoginJWTMiddlewareBuilder(jwtHdl).
+		auth_guard.NewJWTAuthzHandler(jwtHdl, l).
 			IgnorePaths("/users/signup").
 			IgnorePaths("/users/refresh_token").
 			IgnorePaths("/users/login_sms/code/send").
@@ -37,9 +34,9 @@ func GinMiddlewares(redisClient redis.Cmdable,
 			IgnorePaths("/oauth2/wechat/callback").
 			IgnorePaths("/users/login").
 			Build(),
-		accesslog.NewMiddlewareBuilder(func(ctx context.Context, al *accesslog.AccessLog) {
+		access_log.NewMiddlewareBuilder(func(ctx context.Context, al *access_log.AccessLog) {
 			// 设置为 DEBUG 级别
-			l.Debug("GIN 收到请求", loggerx.Field{
+			l.Debug(ctx, "GIN 收到请求", loggerx.Field{
 				Key:   "req",
 				Value: al,
 			})

@@ -5,6 +5,7 @@
 //
 //	mockgen -source=internal/service/user.go -package=svcmocks -destination=internal/service/mocks/user.mock.go
 //
+
 // Package svcmocks is a generated GoMock package.
 package svcmocks
 
@@ -37,6 +38,20 @@ func NewMockUserService(ctrl *gomock.Controller) *MockUserService {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockUserService) EXPECT() *MockUserServiceMockRecorder {
 	return m.recorder
+}
+
+// EditExtraInfo mocks base method.
+func (m *MockUserService) EditExtraInfo(ctx context.Context, u domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EditExtraInfo", ctx, u)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EditExtraInfo indicates an expected call of EditExtraInfo.
+func (mr *MockUserServiceMockRecorder) EditExtraInfo(ctx, u any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditExtraInfo", reflect.TypeOf((*MockUserService)(nil).EditExtraInfo), ctx, u)
 }
 
 // FindOrCreate mocks base method.

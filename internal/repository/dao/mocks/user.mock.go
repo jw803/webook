@@ -5,6 +5,7 @@
 //
 //	mockgen -source=internal/repository/dao/user.go -package=daomocks -destination=internal/repository/dao/mocks/user.mock.go
 //
+
 // Package daomocks is a generated GoMock package.
 package daomocks
 
@@ -111,4 +112,18 @@ func (m *MockUserDAO) Insert(ctx context.Context, u dao.Users) error {
 func (mr *MockUserDAOMockRecorder) Insert(ctx, u any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Insert", reflect.TypeOf((*MockUserDAO)(nil).Insert), ctx, u)
+}
+
+// UpdateExtraInfoById mocks base method.
+func (m *MockUserDAO) UpdateExtraInfoById(ctx context.Context, id int64, u dao.Users) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateExtraInfoById", ctx, id, u)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateExtraInfoById indicates an expected call of UpdateExtraInfoById.
+func (mr *MockUserDAOMockRecorder) UpdateExtraInfoById(ctx, id, u any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateExtraInfoById", reflect.TypeOf((*MockUserDAO)(nil).UpdateExtraInfoById), ctx, id, u)
 }

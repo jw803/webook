@@ -5,14 +5,14 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	"github.com/jw803/webook/internal/interface/web/article"
+	"github.com/jw803/webook/internal/interface/web/user"
 	"github.com/jw803/webook/internal/repository"
 	repository2 "github.com/jw803/webook/internal/repository/article"
 	"github.com/jw803/webook/internal/repository/cache"
 	"github.com/jw803/webook/internal/repository/dao"
 	dao2 "github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/jw803/webook/internal/service"
-	"github.com/jw803/webook/internal/web"
 	"github.com/jw803/webook/ioc"
 )
 
@@ -40,11 +40,9 @@ func InitWebServer() *gin.Engine {
 		ioc.InitSmsMemoryService,
 		ioc.InitWechatService,
 
-		web.NewUserHandler,
-		web.NewOAuth2WechatHandler,
-		web.NewArticleHandler,
+		user.NewUserHandler,
+		article.NewArticleHandler,
 		ioc.NewWechatHandlerConfig,
-		ijwt.NewRedisHandler,
 
 		ioc.InitWebServer,
 		ioc.GinMiddlewares,
