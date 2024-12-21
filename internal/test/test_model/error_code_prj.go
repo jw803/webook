@@ -1,4 +1,4 @@
-package errcode
+package test_model
 
 // User Module
 const (
@@ -6,8 +6,6 @@ const (
 	ErrInvalidUserNameOrPassword
 	ErrUserDuplicated
 	ErrDuplicateEmailSignUp
-	ErrUserCacheKeyNotFound
-
 	ErrInvalidPassword
 	ErrPasswordNotMatch
 

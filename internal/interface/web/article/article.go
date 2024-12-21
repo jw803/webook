@@ -3,8 +3,8 @@ package article
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/interface/web"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/pkg/ginx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/service"
 	"github.com/jw803/webook/pkg/loggerx"
 )
@@ -25,14 +25,14 @@ func NewArticleHandler(svc service.ArticleService, l loggerx.Logger) *ArticleHan
 
 func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 	ug := server.Group("/articles")
-	ug.POST("/edit", ginx.WrapClaimsReq[ijwt.UserClaims, editArticleReq](h.Edit))
-	ug.POST("/publish", ginx.WrapClaimsReq[ijwt.UserClaims, publishArticleReq](h.Publish))
-	ug.POST("/withdraw", ginx.WrapClaimsReq[ijwt.UserClaims, withdrawArticleReq](h.Withdraw))
-	ug.POST("/list", ginx.WrapClaimsQuery[ijwt.UserClaims, listQuery](h.List))
-	ug.GET("/detail/:id", ginx.WrapClaimsParam[ijwt.UserClaims, getArticleParam](h.Detail))
+	ug.POST("/edit", ginx.WrapClaimsReq[jwtx.UserClaims, editArticleReq](h.Edit))
+	ug.POST("/publish", ginx.WrapClaimsReq[jwtx.UserClaims, publishArticleReq](h.Publish))
+	ug.POST("/withdraw", ginx.WrapClaimsReq[jwtx.UserClaims, withdrawArticleReq](h.Withdraw))
+	ug.POST("/list", ginx.WrapClaimsQuery[jwtx.UserClaims, listQuery](h.List))
+	ug.GET("/detail/:id", ginx.WrapClaimsParam[jwtx.UserClaims, getArticleParam](h.Detail))
 
 	pub := ug.Group("/pub")
-	pub.GET("/:id", ginx.WrapClaimsParam[ijwt.UserClaims, getPubArticleParam](h.PubDetail)
+	pub.GET("/:id", ginx.WrapClaimsParam[jwtx.UserClaims, getPubArticleParam](h.PubDetail)
 }
 
 type articleVO struct {

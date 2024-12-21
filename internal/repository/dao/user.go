@@ -96,8 +96,10 @@ func (dao *GORMUserDAO) Insert(ctx context.Context, u Users) error {
 		if mysqlErr.Number == uniqueConflictsErrNo {
 			return errorx.WithCode(errcode.ErrUserDuplicated, "email has already been registered")
 		}
+	} else if err != nil {
+		return errorx.WithCode(errcode.ErrDatabase, err.Error())
 	}
-	return err
+	return nil
 }
 
 func (dao *GORMUserDAO) UpdateExtraInfoById(ctx context.Context, id int64, u Users) error {
@@ -114,7 +116,7 @@ func (dao *GORMUserDAO) UpdateExtraInfoById(ctx context.Context, id int64, u Use
 		return res.Error
 	}
 	if res.RowsAffected == 0 {
-		return errorx.WithCode(errcode.ErrUserNotFound, "user % not found", id)
+		return errorx.WithCode(errcode.ErrUserNotFound, "user %d not found", id)
 	}
 	return nil
 }

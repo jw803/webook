@@ -20,7 +20,7 @@ type LocalLogger struct {
 }
 
 func NewLocalLogger() *LocalLogger {
-	traceId := trace_id.NewGinTraceId()
+	traceId := trace_id.NewNormalTraceId()
 	cfg := zap.NewDevelopmentConfig()
 	err := viper.UnmarshalKey("log", &cfg)
 	if err != nil {

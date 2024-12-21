@@ -1,11 +1,11 @@
-package integration
+package test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"github.com/jw803/webook/internal/integration/startup"
-	"github.com/jw803/webook/internal/web"
+	"github.com/jw803/webook/internal/test/startup"
+	"github.com/jw803/webook/internal/test/test_model"
 	"github.com/jw803/webook/ioc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,7 +26,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 		reqBody string
 
 		wantCode int
-		wantBody web.Result
+		wantBody test_model.Response
 	}{
 		{
 			name: "發送成功",
@@ -45,7 +45,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 				}
 			`,
 			wantCode: 200,
-			wantBody: web.Result{
+			wantBody: test_model.Response{
 				Msg: "发送成功",
 			},
 		},
@@ -70,7 +70,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 				}
 			`,
 			wantCode: 200,
-			wantBody: web.Result{
+			wantBody: test_model.Response{
 				Msg: "发送太频繁，请稍后再试",
 			},
 		},
@@ -95,7 +95,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 				}
 			`,
 			wantCode: 200,
-			wantBody: web.Result{
+			wantBody: test_model.Response{
 				Code: 5,
 				Msg:  "系统错误",
 			},
@@ -112,7 +112,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 				}
 			`,
 			wantCode: 200,
-			wantBody: web.Result{
+			wantBody: test_model.Response{
 				Code: 4,
 				Msg:  "输入有误",
 			},
@@ -129,7 +129,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 				}
 			`,
 			wantCode: 400,
-			wantBody: web.Result{
+			wantBody: test_model.Response{
 				Code: 4,
 				Msg:  "输入有误",
 			},
@@ -151,7 +151,7 @@ func TestUserHandler_e2e_SendLoginSMSCode(t *testing.T) {
 			if resp.Code != 200 {
 				return
 			}
-			var webRes web.Result
+			var webRes test_model.Response
 			err = json.NewDecoder(resp.Body).Decode(&webRes)
 			require.NoError(t, err)
 

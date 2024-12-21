@@ -9,14 +9,16 @@ package startup
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
-	"github.com/jw803/webook/internal/interface/web/jwtx"
+	article3 "github.com/jw803/webook/internal/interface/web/article"
+	"github.com/jw803/webook/internal/interface/web/user"
+	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/repository"
 	article2 "github.com/jw803/webook/internal/repository/article"
 	"github.com/jw803/webook/internal/repository/cache"
 	"github.com/jw803/webook/internal/repository/dao"
 	"github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/jw803/webook/internal/service"
-	"github.com/jw803/webook/internal/web"
+	ioc2 "github.com/jw803/webook/internal/test/test_ioc"
 	"github.com/jw803/webook/ioc"
 )
 
@@ -26,8 +28,8 @@ import (
 func InitWebServer() *gin.Engine {
 	cmdable := InitRedis()
 	handler := jwtx.NewRedisHandler(cmdable)
-	loggerV1 := InitLog()
-	v := ioc.GinMiddlewares(cmdable, handler, loggerV1)
+	logger := ioc2.InitLog()
+	v := ioc.GinMiddlewares(handler, logger)
 	gormDB := InitTestDB()
 	userDAO := dao.NewGORMUserDAO(gormDB)
 	userCache := cache.NewRedisUserCache(cmdable)
@@ -37,26 +39,23 @@ func InitWebServer() *gin.Engine {
 	codeRepository := repository.NewCachedCodeRepository(codeCache)
 	smsService := ioc.InitSmsMemoryService(cmdable)
 	codeService := service.NewSMSCodeService(codeRepository, smsService)
-	userHandler := web.NewUserHandler(userService, codeService, handler)
-	wechatService := InitPhantomWechatService(loggerV1)
-	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
-	oAuth2WechatHandler := web.NewOAuth2WechatHandler(wechatService, userService, handler, wechatHandlerConfig)
+	userHandler := user.NewUserHandler(userService, codeService, handler, logger)
 	articleDAO := article.NewGORMArticleDAO(gormDB)
 	articleCache := cache.NewRedisArticleCache(cmdable)
 	articleRepository := article2.NewArticleRepository(articleDAO, articleCache)
 	articleService := service.NewArticleService(articleRepository)
-	articleHandler := web.NewArticleHandler(articleService, loggerV1)
-	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
+	articleHandler := article3.NewArticleHandler(articleService, logger)
+	engine := ioc.InitWebServer(v, userHandler, articleHandler)
 	return engine
 }
 
-func InitArticleHandler(dao2 article.ArticleDAO) *web.ArticleHandler {
+func InitArticleHandler(dao2 article.ArticleDAO) *article3.ArticleHandler {
 	cmdable := InitRedis()
 	articleCache := cache.NewRedisArticleCache(cmdable)
 	articleRepository := article2.NewArticleRepository(dao2, articleCache)
 	articleService := service.NewArticleService(articleRepository)
-	loggerV1 := InitLog()
-	articleHandler := web.NewArticleHandler(articleService, loggerV1)
+	logger := ioc2.InitLog()
+	articleHandler := article3.NewArticleHandler(articleService, logger)
 	return articleHandler
 }
 
@@ -72,6 +71,6 @@ func InitUserSvc() service.UserService {
 
 // wire.go:
 
-var thirdProvider = wire.NewSet(InitRedis, InitTestDB, InitLog)
+var thirdProvider = wire.NewSet(InitRedis, InitTestDB, ioc2.InitLog)
 
 var userSvcProvider = wire.NewSet(dao.NewGORMUserDAO, cache.NewRedisUserCache, repository.NewCachedUserRepository, service.NewUserService)

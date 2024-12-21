@@ -5,7 +5,7 @@ func init() {
 	register(ErrSuccess, 200, "OK")
 	register(ErrSystem, 500, "Internal server error")
 	register(ErrUnknown, 500, "Internal server error")
-	register(ErrBind, 400, "Error occurred while binding the request body to the struct")
+	register(ErrBind, 400, "Invalid request format")
 	register(ErrValidation, 400, "Validation failed")
 	register(ErrTokenMissing, 401, "Token missing")
 	register(ErrTokenInvalid, 401, "Token invalid")
@@ -33,9 +33,10 @@ func init() {
 	// UserModule
 	register(ErrInvalidUserNameOrPassword, 500, "invalid username or password")
 	register(ErrUserNotFound, 404, "user not found")
-	register(ErrUserDuplicated, 400, "email has already been registered")
-	register(ErrInvalidPassword, 401, "invalid password")
-	register(ErrPasswordNotMatch, 401, "the password and the confirmation password do not match")
+	register(ErrUserDuplicated, 400, "user duplicate")
+	register(ErrInvalidPassword, 400, "Invalid password format")
+	register(ErrPasswordNotMatch, 400, "The password and the confirmation password do not match")
+	register(ErrDuplicateEmailSignUp, 400, "email has already been registered")
 
 	register(ErrArticleNotFound, 404, "article not found")
 

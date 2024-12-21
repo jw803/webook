@@ -7,6 +7,7 @@ import (
 	"github.com/google/wire"
 	"github.com/jw803/webook/internal/interface/web/article"
 	"github.com/jw803/webook/internal/interface/web/user"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/repository"
 	repository2 "github.com/jw803/webook/internal/repository/article"
 	"github.com/jw803/webook/internal/repository/cache"
@@ -36,13 +37,11 @@ func InitWebServer() *gin.Engine {
 		service.NewSMSCodeService,
 		service.NewArticleService,
 
-		// 直接基于内存实现
 		ioc.InitSmsMemoryService,
-		ioc.InitWechatService,
 
+		jwtx.NewRedisHandler,
 		user.NewUserHandler,
 		article.NewArticleHandler,
-		ioc.NewWechatHandlerConfig,
 
 		ioc.InitWebServer,
 		ioc.GinMiddlewares,

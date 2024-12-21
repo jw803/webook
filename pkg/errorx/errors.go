@@ -327,7 +327,7 @@ func WrapC(err error, code int, format string, args ...interface{}) error {
 }
 
 // Error return the externally-safe error message.
-func (w *withCode) Error() string { return fmt.Sprintf("%v", w) }
+func (w *withCode) Error() string { return w.err.Error() }
 
 // Cause return the cause of the withCode error.
 func (w *withCode) Cause() error { return w.cause }

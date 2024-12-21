@@ -3,8 +3,8 @@ package article
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/domain"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/pkg/errcode"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/pkg/errorx"
 )
 
@@ -25,7 +25,7 @@ func (req editArticleReq) toDomain(uid int64) domain.Article {
 	}
 }
 
-func (h *ArticleHandler) Edit(ctx *gin.Context, uc *ijwt.UserClaims, req editArticleReq) (any, error) {
+func (h *ArticleHandler) Edit(ctx *gin.Context, uc *jwtx.UserClaims, req editArticleReq) (any, error) {
 	id, err := h.svc.Save(ctx, req.toDomain(uc.Uid))
 	if errorx.IsCode(err, errcode.ErrArticleNotFound) {
 		h.l.P2(ctx, "failed to edit article")

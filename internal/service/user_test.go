@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
-	"errors"
 	"github.com/jw803/webook/internal/domain"
+	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/internal/repository"
 	repomocks "github.com/jw803/webook/internal/repository/mocks"
+	"github.com/jw803/webook/internal/test/test_ioc"
+	"github.com/jw803/webook/internal/test/test_model"
+	"github.com/jw803/webook/pkg/errorx"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"golang.org/x/crypto/bcrypt"
@@ -28,7 +31,7 @@ func Test_UserService_Login(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name: "登入成功",
+			name: "login success",
 			mock: func(ctrl *gomock.Controller) repository.UserRepository {
 				repo := repomocks.NewMockUserRepository(ctrl)
 				repo.EXPECT().FindByEmail(gomock.Any(), "123@qq.com").
@@ -52,35 +55,35 @@ func Test_UserService_Login(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "用戶不存在",
+			name: "user not found",
 			mock: func(ctrl *gomock.Controller) repository.UserRepository {
 				repo := repomocks.NewMockUserRepository(ctrl)
 				repo.EXPECT().FindByEmail(gomock.Any(), "123@qq.com").
-					Return(domain.User{}, repository.ErrUserNotFound)
+					Return(domain.User{}, errorx.WithCode(test_model.ErrUserNotFound, ""))
 				return repo
 			},
 			email:    "123@qq.com",
 			password: "abc123321",
 
 			wantUser: domain.User{},
-			wantErr:  ErrInvalidUserOrPassword,
+			wantErr:  errorx.WithCode(test_model.ErrInvalidUserNameOrPassword, ""),
 		},
 		{
-			name: "DB错误",
+			name: "DB Error",
 			mock: func(ctrl *gomock.Controller) repository.UserRepository {
 				repo := repomocks.NewMockUserRepository(ctrl)
 				repo.EXPECT().FindByEmail(gomock.Any(), "123@qq.com").
-					Return(domain.User{}, errors.New("mock db 错误"))
+					Return(domain.User{}, errorx.WithCode(test_model.ErrDatabase, ""))
 				return repo
 			},
 			email:    "123@qq.com",
 			password: "abc123321",
 
 			wantUser: domain.User{},
-			wantErr:  errors.New("mock db 错误"),
+			wantErr:  errorx.WithCode(test_model.ErrDatabase, ""),
 		},
 		{
-			name: "密码不对",
+			name: "incorrect password",
 			mock: func(ctrl *gomock.Controller) repository.UserRepository {
 				repo := repomocks.NewMockUserRepository(ctrl)
 				repo.EXPECT().FindByEmail(gomock.Any(), "123@qq.com").
@@ -96,7 +99,7 @@ func Test_UserService_Login(t *testing.T) {
 			password: "abc123321",
 
 			wantUser: domain.User{},
-			wantErr:  ErrInvalidUserOrPassword,
+			wantErr:  errorx.WithCode(errcode.ErrInvalidUserNameOrPassword, "the password user inputted is incorrect"),
 		},
 	}
 
@@ -105,9 +108,9 @@ func Test_UserService_Login(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			svc := NewUserService(tc.mock(ctrl))
+			svc := NewUserService(tc.mock(ctrl), test_ioc.InitLog())
 			u, err := svc.Login(context.Background(), tc.email, tc.password)
-			assert.Equal(t, tc.wantErr, err)
+			assert.True(t, errorx.IsEqual(tc.wantErr, err))
 			assert.Equal(t, tc.wantUser, u)
 		})
 	}

@@ -136,6 +136,28 @@ func IsCode(err error, code int) bool {
 	return false
 }
 
+func IsEqual(err1 error, err2 error) bool {
+	if err1 == nil && err2 == nil {
+		return true
+	}
+	var codeErr1 *withCode
+	var codeErr2 *withCode
+	if !errors.As(err1, &codeErr1) ||
+		!errors.As(err2, &codeErr2) {
+		fmt.Print("error should be wrap with error code")
+		return false
+	}
+	if codeErr1.err.Error() != codeErr2.err.Error() {
+		fmt.Println(fmt.Sprintf("Error Diff: err1's msg: %s, err2' msg: %s", codeErr1.err.Error(), codeErr2.err.Error()))
+		return false
+	}
+	if codeErr1.code != codeErr2.code {
+		fmt.Println(fmt.Sprintf("Error Diff: err1's code: %d, err2' code: %d", codeErr1.code, codeErr2.code))
+		return false
+	}
+	return true
+}
+
 func init() {
 	codes[unknownCoder.Code()] = unknownCoder
 }

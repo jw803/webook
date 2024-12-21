@@ -2,8 +2,8 @@ package article
 
 import (
 	"github.com/gin-gonic/gin"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
 	"github.com/jw803/webook/internal/pkg/errcode"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/pkg/errorx"
 	"time"
 )
@@ -12,7 +12,7 @@ type getArticleParam struct {
 	Id int64 `uri:"id"`
 }
 
-func (h *ArticleHandler) Detail(ctx *gin.Context, usr *ijwt.UserClaims, params getArticleParam) (any, error) {
+func (h *ArticleHandler) Detail(ctx *gin.Context, usr *jwtx.UserClaims, params getArticleParam) (any, error) {
 	var result articleVO
 	art, err := h.svc.GetById(ctx, params.Id)
 	if err != nil {

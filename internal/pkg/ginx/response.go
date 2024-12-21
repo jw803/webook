@@ -7,10 +7,9 @@ import (
 )
 
 type Response struct {
-	Code      int         `json:"code,omitempty"`
-	Message   string      `json:"message,omitempty"`
-	Reference string      `json:"reference,omitempty"`
-	Data      interface{} `json:"data,omitempty"`
+	Code    int         `json:"code,omitempty"`
+	Message string      `json:"msg,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
 func WriteResponse(c *gin.Context, err error, data any) {
@@ -18,9 +17,10 @@ func WriteResponse(c *gin.Context, err error, data any) {
 		coder := errorx.ParseCoder(err)
 		c.JSON(coder.HTTPStatus(), Response{
 			Code:    coder.Code(),
-			Message: coder.Reference(),
+			Message: coder.String(),
 			Data:    data,
 		})
+		return
 	}
 	c.JSON(http.StatusOK, Response{Data: data})
 }

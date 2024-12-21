@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jw803/webook/internal/domain"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
 	"github.com/redis/go-redis/v9"
 	"time"
 )
@@ -46,18 +48,19 @@ func NewRedisUserCache(client redis.Cmdable) UserCache {
 // Get 如果没有数据，返回一个特定的 error
 func (cache *RedisUserCache) Get(ctx context.Context, id int64) (domain.User, error) {
 	key := cache.key(id)
-	// 数据不存在，err = redis.Nil
 	val, err := cache.client.Get(ctx, key).Bytes()
+	if err == redis.Nil {
+		return domain.User{}, errorx.WithCode(errcode.ErrUserCacheKeyNotFound, err.Error())
+	}
 	if err != nil {
-		return domain.User{}, err
+		return domain.User{}, errorx.WithCode(errcode.ErrRedis, err.Error())
 	}
 	var u domain.User
 	err = json.Unmarshal(val, &u)
-	//if err != nil {
-	//	return domain.User{}, err
-	//}
-	//return u, nil
-	return u, err
+	if err != nil {
+		return domain.User{}, errorx.WithCode(errcode.ErrBind, err.Error())
+	}
+	return u, nil
 }
 
 func (cache *RedisUserCache) Set(ctx context.Context, u domain.User) error {

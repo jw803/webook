@@ -1,11 +1,11 @@
-package integration
+package test
 
 import (
 	"bytes"
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/domain"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	articleDao "github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,7 +15,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/jw803/webook/internal/integration/startup"
+	"github.com/jw803/webook/internal/test/startup"
 )
 
 type ArticleGORMHandlerTestSuite struct {
@@ -30,7 +30,7 @@ func (s *ArticleGORMHandlerTestSuite) SetupSuite() {
 	s.db = startup.InitTestDB()
 	s.server = gin.Default()
 	s.server.Use(func(ctx *gin.Context) {
-		ctx.Set("claims", &ijwt.UserClaims{
+		ctx.Set("claims", &jwtx.UserClaims{
 			Uid: 123,
 		})
 		ctx.Next()

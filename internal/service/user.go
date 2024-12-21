@@ -7,6 +7,7 @@ import (
 	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/internal/repository"
 	"github.com/jw803/webook/pkg/errorx"
+	"github.com/jw803/webook/pkg/loggerx"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,12 +24,14 @@ type UserService interface {
 
 type userService struct {
 	repo repository.UserRepository
+	l    loggerx.Logger
 }
 
 // NewUserService 我用的人，只管用，怎么初始化我不管，我一点都不关心如何初始化
-func NewUserService(repo repository.UserRepository) UserService {
+func NewUserService(repo repository.UserRepository, l loggerx.Logger) UserService {
 	return &userService{
 		repo: repo,
+		l:    l,
 	}
 }
 
@@ -51,7 +54,8 @@ func (svc *userService) Login(ctx context.Context, email, password string) (doma
 	// 比较密码了
 	err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	if err != nil {
-		return domain.User{}, errorx.WithCode(errcode.ErrInvalidUserNameOrPassword, err.Error())
+		svc.l.Error(ctx, "the password user inputted is incorrect", loggerx.Error(err))
+		return domain.User{}, errorx.WithCode(errcode.ErrInvalidUserNameOrPassword, "the password user inputted is incorrect")
 	}
 	return u, nil
 }
@@ -62,7 +66,13 @@ func (svc *userService) SignUp(ctx context.Context, u domain.User) error {
 		return err
 	}
 	u.Password = string(hash)
-	return svc.repo.Create(ctx, u)
+	err = svc.repo.Create(ctx, u)
+	if errorx.IsCode(err, errcode.ErrUserDuplicated) {
+		return errorx.WithCode(errcode.ErrDuplicateEmailSignUp, "duplicate mail signup")
+	} else {
+		return err
+	}
+	return nil
 }
 
 func (svc *userService) FindOrCreate(ctx context.Context,

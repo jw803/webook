@@ -48,7 +48,7 @@ func WrapClaim[C jwt.Claims](fn func(*gin.Context, *C) (any, error)) gin.Handler
 func WrapReq[DTO any](fn func(ctx *gin.Context, dto DTO) (any, error)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		dto, ok := bindAndValidateReq[DTO](ctx)
-		if ok {
+		if !ok {
 			return
 		}
 
@@ -126,7 +126,7 @@ func WrapClaimsParam[C jwt.Claims, Param any](fn func(*gin.Context, *C, Param) (
 }
 
 func isValidationError(err error) bool {
-	var invalidValidationError *validator.InvalidValidationError
+	var invalidValidationError validator.ValidationErrors
 	return errors.As(err, &invalidValidationError)
 }
 
@@ -154,13 +154,13 @@ func bindAndValidateReq[DTO any](ctx *gin.Context) (*DTO, bool) {
 		if isValidationError(err) {
 			logger.P3(ctx, "failed to validate request body", loggerx.Error(err))
 			WriteResponse(ctx, errorx.WithCode(errcode.ErrValidation, "failed to validate request body"), nil)
-			return nil, true
+			return nil, false
 		}
 		logger.P3(ctx, "failed to bind request body", loggerx.Error(err))
 		WriteResponse(ctx, errorx.WithCode(errcode.ErrBind, "failed to bind request body"), nil)
-		return nil, true
+		return nil, false
 	}
-	return &dto, false
+	return &dto, true
 }
 
 func bindAndValidateQuery[DTO any](ctx *gin.Context) (*DTO, bool) {

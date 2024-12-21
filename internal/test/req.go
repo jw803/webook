@@ -1,4 +1,4 @@
-package integration
+package test
 
 type Article struct {
 	Id      int64  `json:"id"`

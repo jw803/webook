@@ -4,7 +4,7 @@ import (
 	"github.com/ecodeclub/ekit/slice"
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/domain"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"time"
 )
 
@@ -13,7 +13,7 @@ type listQuery struct {
 	Limit  int `json:"limit"`
 }
 
-func (h *ArticleHandler) List(ctx *gin.Context, uc *ijwt.UserClaims, req listQuery) (any, error) {
+func (h *ArticleHandler) List(ctx *gin.Context, uc *jwtx.UserClaims, req listQuery) (any, error) {
 	result := make([]articleVO, 0)
 	res, err := h.svc.List(ctx, uc.Uid, req.Offset, req.Limit)
 	if err != nil {

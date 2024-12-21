@@ -5,18 +5,20 @@ package startup
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	article2 "github.com/jw803/webook/internal/interface/web/article"
+	"github.com/jw803/webook/internal/interface/web/user"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/repository"
 	"github.com/jw803/webook/internal/repository/article"
 	"github.com/jw803/webook/internal/repository/cache"
 	"github.com/jw803/webook/internal/repository/dao"
 	articleDao "github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/jw803/webook/internal/service"
-	"github.com/jw803/webook/internal/web"
+	ioc2 "github.com/jw803/webook/internal/test/test_ioc"
 	"github.com/jw803/webook/ioc"
 )
 
-var thirdProvider = wire.NewSet(InitRedis, InitTestDB, InitLog)
+var thirdProvider = wire.NewSet(InitRedis, InitTestDB, ioc2.InitLog)
 var userSvcProvider = wire.NewSet(
 	dao.NewGORMUserDAO,
 	cache.NewRedisUserCache,
@@ -39,15 +41,13 @@ func InitWebServer() *gin.Engine {
 		ioc.InitSmsMemoryService,
 
 		// 指定啥也不干的 wechat service
-		InitPhantomWechatService,
 		service.NewSMSCodeService,
 		service.NewArticleService,
+
 		// handler 部分
-		web.NewUserHandler,
-		web.NewOAuth2WechatHandler,
-		web.NewArticleHandler,
-		ioc.NewWechatHandlerConfig,
-		ijwt.NewRedisHandler,
+		jwtx.NewRedisHandler,
+		user.NewUserHandler,
+		article2.NewArticleHandler,
 
 		// gin 的中间件
 		ioc.GinMiddlewares,
@@ -59,13 +59,13 @@ func InitWebServer() *gin.Engine {
 	return gin.Default()
 }
 
-func InitArticleHandler(dao articleDao.ArticleDAO) *web.ArticleHandler {
+func InitArticleHandler(dao articleDao.ArticleDAO) *article2.ArticleHandler {
 	wire.Build(thirdProvider,
 		cache.NewRedisArticleCache,
 		article.NewArticleRepository,
 		service.NewArticleService,
-		web.NewArticleHandler)
-	return new(web.ArticleHandler)
+		article2.NewArticleHandler)
+	return new(article2.ArticleHandler)
 }
 
 func InitUserSvc() service.UserService {

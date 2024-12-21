@@ -3,7 +3,7 @@ package article
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/domain"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 )
 
 type withdrawArticleReq struct {
@@ -12,7 +12,7 @@ type withdrawArticleReq struct {
 	Content string `json:"content"`
 }
 
-func (h *ArticleHandler) Withdraw(ctx *gin.Context, uc *ijwt.UserClaims, req withdrawArticleReq) (any, error) {
+func (h *ArticleHandler) Withdraw(ctx *gin.Context, uc *jwtx.UserClaims, req withdrawArticleReq) (any, error) {
 	err := h.svc.Withdraw(ctx, domain.Article{
 		Id: req.Id,
 		Author: domain.Author{

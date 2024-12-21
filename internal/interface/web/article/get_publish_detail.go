@@ -3,7 +3,7 @@ package article
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/domain"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"golang.org/x/sync/errgroup"
 	"time"
 )
@@ -12,7 +12,7 @@ type getPubArticleParam struct {
 	Id int64 `uri:"id"`
 }
 
-func (h *ArticleHandler) PubDetail(ctx *gin.Context, uc *ijwt.UserClaims, params getPubArticleParam) (any, error) {
+func (h *ArticleHandler) PubDetail(ctx *gin.Context, uc *jwtx.UserClaims, params getPubArticleParam) (any, error) {
 	var article articleVO
 	id := params.Id
 

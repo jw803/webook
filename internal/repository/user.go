@@ -69,13 +69,8 @@ func (r *CachedUserRepository) Create(ctx context.Context, u domain.User) error 
 func (r *CachedUserRepository) FindById(ctx context.Context, id int64) (domain.User, error) {
 	u, err := r.cache.Get(ctx, id)
 	if err == nil {
-		// 必然是有数据
 		return u, nil
 	}
-	// 没这个数据
-	//if err == cache.ErrKeyNotExist {
-	// 去数据库里面加载
-	//}
 
 	ue, err := r.dao.FindById(ctx, id)
 	if err != nil {

@@ -43,9 +43,10 @@ func NewCodeCacheGoBestPractice(client redis.Cmdable, l loggerx.Logger) *RedisCo
 	}
 }
 
-func NewRedisCodeCache(client redis.Cmdable) CodeCache {
+func NewRedisCodeCache(client redis.Cmdable, l loggerx.Logger) CodeCache {
 	return &RedisCodeCache{
 		client: client,
+		l:      l,
 	}
 }
 
@@ -69,7 +70,7 @@ func (c *RedisCodeCache) Set(ctx context.Context, biz, phone, code string) error
 	default:
 		// 系统错误
 		c.l.Error(ctx, "unexpected key ttl, it should not be permanent")
-		return errors.New("系统错误")
+		return errorx.WithCode(errcode.ErrRedis, "redis error")
 	}
 }
 

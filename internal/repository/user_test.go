@@ -16,8 +16,8 @@ import (
 )
 
 func Test_UserRepository_FindById(t *testing.T) {
-	nowMs := time.Now().UnixMilli()
-	now := time.UnixMilli(nowMs)
+	nowTSMs := time.Now().UnixMilli()
+	now := time.UnixMilli(nowTSMs)
 
 	testCases := []struct {
 		name string
@@ -30,7 +30,7 @@ func Test_UserRepository_FindById(t *testing.T) {
 		wantErr  error
 	}{
 		{
-			name: "緩存未命中，查詢成功",
+			name: "success, but cache miss",
 			mock: func(ctrl *gomock.Controller) (dao.UserDAO, cache.UserCache) {
 				ud := daomocks.NewMockUserDAO(ctrl)
 				ud.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.Users{
@@ -44,11 +44,11 @@ func Test_UserRepository_FindById(t *testing.T) {
 						String: "15212345678",
 						Valid:  true,
 					},
-					Ctime: nowMs,
-					Utime: nowMs,
+					Ctime: nowTSMs,
+					Utime: nowTSMs,
 				}, nil)
 				uc := cachemocks.NewMockUserCache(ctrl)
-				uc.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{}, cache.ErrKeyNotExist)
+				uc.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{}, errors.New("cache error"))
 				uc.EXPECT().Set(gomock.Any(), domain.User{
 					Id:       123,
 					Email:    "123@qq.com",
@@ -72,7 +72,7 @@ func Test_UserRepository_FindById(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "緩存命中，查詢成功",
+			name: "success, cache hit",
 			mock: func(ctrl *gomock.Controller) (dao.UserDAO, cache.UserCache) {
 				uc := cachemocks.NewMockUserCache(ctrl)
 				uc.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{
@@ -82,7 +82,6 @@ func Test_UserRepository_FindById(t *testing.T) {
 					Phone:    "15212345678",
 					Ctime:    now,
 				}, nil)
-
 				return nil, uc
 			},
 			ctx: context.Background(),
@@ -98,10 +97,10 @@ func Test_UserRepository_FindById(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "緩存未命中，查詢失敗",
+			name: "cache miss, failed to query db",
 			mock: func(ctrl *gomock.Controller) (dao.UserDAO, cache.UserCache) {
 				ud := daomocks.NewMockUserDAO(ctrl)
-				ud.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.Users{}, errors.New("db 爆掉"))
+				ud.EXPECT().FindById(gomock.Any(), int64(123)).Return(dao.Users{}, errors.New("db error"))
 				uc := cachemocks.NewMockUserCache(ctrl)
 				uc.EXPECT().Get(gomock.Any(), int64(123)).Return(domain.User{}, cache.ErrKeyNotExist)
 				return ud, uc
@@ -110,7 +109,7 @@ func Test_UserRepository_FindById(t *testing.T) {
 			id:  int64(123),
 
 			wantUser: domain.User{},
-			wantErr:  errors.New("db 爆掉"),
+			wantErr:  errors.New("db error"),
 		},
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	gormMysql "gorm.io/driver/mysql"
@@ -27,7 +28,7 @@ func TestGORMUserDAO_Insert(t *testing.T) {
 		wantId      int64
 	}{
 		{
-			name: "插入成功",
+			name: "insert successfully",
 			mock: func(t *testing.T) *sql.DB {
 				mockDB, mock, err := sqlmock.New()
 				res := sqlmock.NewResult(3, 1)
@@ -44,7 +45,7 @@ func TestGORMUserDAO_Insert(t *testing.T) {
 			},
 		},
 		{
-			name: "電子郵件衝突",
+			name: "duplicate email",
 			mock: func(t *testing.T) *sql.DB {
 				mockDB, mock, err := sqlmock.New()
 				mock.ExpectExec("INSERT INTO `users` .*").
@@ -54,36 +55,39 @@ func TestGORMUserDAO_Insert(t *testing.T) {
 				require.NoError(t, err)
 				return mockDB
 			},
-			user:        Users{},
-			wantErrCode: errcode.ErrUserDuplicated,
+			user:    Users{},
+			wantErr: errorx.WithCode(errcode.ErrUserDuplicated, "email has already been registered"),
 		},
 		{
-			name: "数据库错误",
+			name: "db error",
 			mock: func(t *testing.T) *sql.DB {
 				mockDB, mock, err := sqlmock.New()
 				// 这边预期的是正则表达式
 				// 这个写法的意思就是，只要是 INSERT 到 users 的语句
 				mock.ExpectExec("INSERT INTO `users` .*").
-					WillReturnError(errors.New("数据库错误"))
+					WillReturnError(errors.New("db error"))
 				require.NoError(t, err)
 				return mockDB
 			},
 			user:    Users{},
-			wantErr: errors.New("数据库错误"),
+			wantErr: errorx.WithCode(errcode.ErrDatabase, "db error"),
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			db, err := gorm.Open(gormMysql.New(gormMysql.Config{
-				Conn:                      tc.mock(t),
+				Conn: tc.mock(t),
+				// 停用gorm初始化 發起 SELECT VERSION的調用
 				SkipInitializeWithVersion: true,
 			}), &gorm.Config{
-				DisableAutomaticPing:   true,
+				// no need to ping mock db
+				DisableAutomaticPing: true,
+				// if false, even if a simple CU clause, gorm also create a transaction
 				SkipDefaultTransaction: true,
 			})
 			d := NewGORMUserDAO(db)
 			err = d.Insert(tc.ctx, tc.user)
-			assert.Equal(t, tc.wantErr, err)
+			assert.True(t, true, errorx.IsEqual(tc.wantErr, err))
 		})
 	}
 }

@@ -2,6 +2,7 @@ package ioc
 
 import (
 	"github.com/jw803/webook/pkg/loggerx"
+	"github.com/jw803/webook/pkg/trace_id"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -16,5 +17,5 @@ func InitLogger() loggerx.Logger {
 	if err != nil {
 		panic(err)
 	}
-	return loggerx.NewZapLogger(l)
+	return loggerx.NewZapLogger(trace_id.NewNormalTraceId(), l)
 }

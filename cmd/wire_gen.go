@@ -8,14 +8,15 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jw803/webook/internal/interface/web/jwtx"
+	article3 "github.com/jw803/webook/internal/interface/web/article"
+	"github.com/jw803/webook/internal/interface/web/user"
+	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/repository"
 	article2 "github.com/jw803/webook/internal/repository/article"
 	"github.com/jw803/webook/internal/repository/cache"
 	"github.com/jw803/webook/internal/repository/dao"
 	"github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/jw803/webook/internal/service"
-	"github.com/jw803/webook/internal/web"
 	"github.com/jw803/webook/ioc"
 )
 
@@ -24,8 +25,8 @@ import (
 func InitWebServer() *gin.Engine {
 	cmdable := ioc.InitRedis()
 	handler := jwtx.NewRedisHandler(cmdable)
-	loggerV1 := ioc.InitLogger()
-	v := ioc.GinMiddlewares(cmdable, handler, loggerV1)
+	logger := ioc.InitLogger()
+	v := ioc.GinMiddlewares(handler, logger)
 	db := ioc.InitDB()
 	userDAO := dao.NewGORMUserDAO(db)
 	userCache := cache.NewRedisUserCache(cmdable)
@@ -35,14 +36,12 @@ func InitWebServer() *gin.Engine {
 	codeRepository := repository.NewCachedCodeRepository(codeCache)
 	smsService := ioc.InitSmsMemoryService(cmdable)
 	codeService := service.NewSMSCodeService(codeRepository, smsService)
-	userHandler := web.NewUserHandler(userService, codeService, handler)
-	wechatService := ioc.InitWechatService(loggerV1)
-	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
+	userHandler := user.NewUserHandler(userService, codeService, handler, logger)
 	articleDAO := article.NewGORMArticleDAO(db)
 	articleCache := cache.NewRedisArticleCache(cmdable)
 	articleRepository := article2.NewArticleRepository(articleDAO, articleCache)
 	articleService := service.NewArticleService(articleRepository)
-	articleHandler := web.NewArticleHandler(articleService, loggerV1)
-	engine := ioc.InitWebServer(v, userHandler, oAuth2WechatHandler, articleHandler)
+	articleHandler := article3.NewArticleHandler(articleService, logger)
+	engine := ioc.InitWebServer(v, userHandler, articleHandler)
 	return engine
 }

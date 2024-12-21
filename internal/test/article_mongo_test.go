@@ -1,4 +1,4 @@
-package integration
+package test
 
 import (
 	"bytes"
@@ -7,9 +7,9 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/domain"
-	"github.com/jw803/webook/internal/integration/startup"
-	ijwt "github.com/jw803/webook/internal/interface/web/jwtx"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	articledao "github.com/jw803/webook/internal/repository/dao/article"
+	"github.com/jw803/webook/internal/test/startup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,7 +32,7 @@ func (s *ArticleMongoHandlerTestSuite) SetupSuite() {
 	s.server = gin.Default()
 	s.server.Use(func(context *gin.Context) {
 		// 直接设置好
-		context.Set("claims", &ijwt.UserClaims{
+		context.Set("claims", &jwtx.UserClaims{
 			Uid: 123,
 		})
 		context.Next()
