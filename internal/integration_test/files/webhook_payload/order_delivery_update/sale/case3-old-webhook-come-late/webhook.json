@@ -1,0 +1,44 @@
+{
+  "event": "OrderDelivery",
+  "merchant_handle": "wstyle",
+  "merchant_id": "65acced63a81ecae8d000001",
+  "resource": {
+    "arrived_at": "2024-04-02T07:06:50.946+00:00",
+    "collected_at": null,
+    "created_at": "2024-04-02T07:06:29.735Z",
+    "delivery_option_id": "628f1dff89015f0015423c1d",
+    "delivery_status": "pending",
+    "delivery_type": "custom",
+    "id": "660bae757bd2b90014047944",
+    "name_translations": {
+      "en": "custom",
+      "zh-hant": "自訂出貨"
+    },
+    "order_id": "order_003",
+    "platform": "custom",
+    "remark": null,
+    "request_accepted_at": null,
+    "request_authorized_at": null,
+    "request_submitted_at": null,
+    "requested_fmt_at": null,
+    "require_expired_upload": false,
+    "require_storeclosed_upload": false,
+    "return_order_id": null,
+    "returned_at": null,
+    "shipped_at": "2024-04-30T08:16:51.736+00:00",
+    "status": "shipped",
+    "store_closed_at": null,
+    "storeclosed_upload_at": null,
+    "total": {
+      "cents": 80,
+      "currency_iso": "TWD",
+      "currency_symbol": "NT$",
+      "dollars": 80,
+      "label": "NT$80"
+    },
+    "updated_at": "2024-04-30T08:16:51.737Z"
+  },
+  "topic": "order_delivery/update",
+  "trace_id": "95dd400e-b929-4b47-842b-4066adca7241",
+  "ts": "1"
+}

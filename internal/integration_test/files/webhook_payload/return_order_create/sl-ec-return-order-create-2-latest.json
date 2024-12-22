@@ -1,0 +1,68 @@
+{
+  "event": "ReturnOrder",
+  "merchant_handle": "cstdemo1",
+  "merchant_id": "65acced63a81ecae8d000001",
+  "resource": {
+    "coupon_ids": null,
+    "created_at": "2024-04-02T07:07:38.559Z",
+    "custom_fields": {},
+    "custom_fields_translations": [
+      {
+        "field_id": "654b351c151bc4000e2b55ad",
+        "field_translations": {
+          "zh-hant": "請顧客提供身分證字號"
+        },
+        "value": "111"
+      }
+    ],
+    "customer_email": "paul.he@shopline.com",
+    "customer_id": "65f2a98956f6ab000a02e29c",
+    "customer_info": {},
+    "customer_name": "paul",
+    "customer_phone": "0911222333",
+    "customer_type": "User",
+    "delivery_address": {
+      "address_1": "Yovita Marsyella,Jl. Maleo 3 Blok JB 9 No. 1A,PASAR MINGGU,KOTA ADM",
+      "address_2": "中正區",
+      "city": "台北市",
+      "country": "台灣",
+      "country_code": "TW",
+      "district": "",
+      "logistic_codes": [
+        "1200001",
+        "1200013"
+      ],
+      "postcode": "100",
+      "recipient_name": "paul",
+      "recipient_phone": "0900777888",
+      "recipient_phone_country_code": "886",
+      "state": ""
+    },
+    "delivery_data": {},
+    "expired_at": null,
+    "id": "return_order_id_001",
+    "inspect_status": "pending",
+    "item_ids": [
+      "660bae757bd2b9001404793e"
+    ],
+    "merchant_return_order_number": null,
+    "order_id": "order_id_001",
+    "order_remarks": "",
+    "ref_data": {
+      "return_order_revamp": "v1"
+    },
+    "return_order_number": "2024040207073761",
+    "returned_by": "admin",
+    "seller_id": "622acb5a597ead003242444d",
+    "seller_type": "Merchant",
+    "order": {
+      "_id": "order_id_001",
+      "merchant_order_number": null,
+      "order_number": "order_number_001"
+    },
+    "updated_at": "2024-04-02T07:07:38.732Z"
+  },
+  "topic": "return_order/create",
+  "trace_id": "327ed60d-5593-4ac2-92bf-c7e1846dd6b6",
+  "ts": "1000"
+}

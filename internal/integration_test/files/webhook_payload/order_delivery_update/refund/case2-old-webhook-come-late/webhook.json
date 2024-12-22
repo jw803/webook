@@ -1,0 +1,44 @@
+{
+  "event": "OrderDelivery",
+  "merchant_handle": "cstdemo1",
+  "merchant_id": "622acb5a597ead003242444d",
+  "resource": {
+    "arrived_at": null,
+    "collected_at": null,
+    "created_at": "2024-04-02T07:07:38.599Z",
+    "delivery_option_id": "628f1dff89015f0015423c1d",
+    "delivery_status": "returning",
+    "delivery_type": "custom_return",
+    "id": "660baeba911b140018996c98",
+    "name_translations": {
+      "en": "Custom Return",
+      "zh-hant": "自訂退貨"
+    },
+    "order_id": "order_002",
+    "platform": "custom_return",
+    "remark": null,
+    "request_accepted_at": null,
+    "request_authorized_at": null,
+    "request_submitted_at": null,
+    "requested_fmt_at": null,
+    "require_expired_upload": false,
+    "require_storeclosed_upload": false,
+    "return_order_id": "return_order_001",
+    "returned_at": null,
+    "shipped_at": null,
+    "status": "return_collected",
+    "store_closed_at": null,
+    "storeclosed_upload_at": null,
+    "total": {
+      "cents": 332,
+      "currency_iso": "TWD",
+      "currency_symbol": "NT$",
+      "dollars": 332,
+      "label": "NT$332"
+    },
+    "updated_at": "2024-05-02T08:51:40.013Z"
+  },
+  "topic": "order_delivery/update",
+  "trace_id": "a8363e8a-c433-4a67-84fb-c1d16d49b877",
+  "ts": "1"
+}
