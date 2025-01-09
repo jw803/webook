@@ -10,7 +10,7 @@ import (
 	"github.com/jw803/webook/config"
 	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/internal/pkg/ginx"
-	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/pkg/errorx"
 	"github.com/jw803/webook/pkg/loggerx"
 )
@@ -21,12 +21,12 @@ type Claims struct {
 
 type JWTAuthzMiddlewareBuilder struct {
 	publicPaths sets.Set[string]
-	jwt_handler.JWTHandler
+	jwtx.JWTHandler
 	l loggerx.Logger
 }
 
-func NewJWTAuthzHandler(jwtHandler jwt_handler.JWTHandler, l loggerx.Logger) *JWTAuthzMiddlewareBuilder {
-	return &JWTAuthzMiddlewareBuilder{
+func NewJWTAuthzHandler(jwtHandler jwtx.JWTHandler, l loggerx.Logger) JWTAuthzMiddlewareBuilder {
+	return JWTAuthzMiddlewareBuilder{
 		publicPaths: hashset.New[string](),
 		JWTHandler:  jwtHandler,
 		l:           l,
@@ -43,7 +43,7 @@ func (b *JWTAuthzMiddlewareBuilder) Build() gin.HandlerFunc {
 		if b.publicPaths.Contains(ctx.Request.URL.Path) {
 			return
 		}
-		authToken := b.ExtractTokenString(ctx)
+		authToken := b.ExtractToken(ctx)
 		c := Claims{}
 		token, err := jwt.ParseWithClaims(authToken, &c, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

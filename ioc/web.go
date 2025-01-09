@@ -14,15 +14,24 @@ import (
 	"time"
 )
 
-func InitWebServer(mdls []gin.HandlerFunc, userHdl *userhdl.UserHandler, articleHdl *articlehdl.ArticleHandler) *gin.Engine {
-	server := gin.Default()
-	server.Use(mdls...)
-	userHdl.RegisterRoutes(server)
-	articleHdl.RegisterRoutes(server)
-	return server
+const (
+	internal_api = "internal"
+)
+
+func InitWebServer(mdls []gin.HandlerFunc,
+	userHdl *userhdl.UserHandler,
+	articleHdl *articlehdl.ArticleHandler) map[string]*gin.Engine {
+	serverMap := make(map[string]*gin.Engine)
+
+	internalServer := gin.Default()
+	internalServer.Use(mdls...)
+	userHdl.RegisterRoutes(internalServer)
+	articleHdl.RegisterRoutes(internalServer)
+	serverMap[internal_api] = internalServer
+	return serverMap
 }
 
-func GinMiddlewares(jwtHdl jwtx.Handler, l loggerx.Logger) []gin.HandlerFunc {
+func GinMiddlewares(jwtHdl jwtx.JWTHandler, l loggerx.Logger) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
 		auth_guard.NewJWTAuthzHandler(jwtHdl, l).
@@ -46,8 +55,8 @@ func GinMiddlewares(jwtHdl jwtx.Handler, l loggerx.Logger) []gin.HandlerFunc {
 
 func corsHdl() gin.HandlerFunc {
 	return cors.New(cors.Config{
-		//AllowOrigins: []string{"*"},
-		//AllowMethods: []string{"POST", "GET"},
+		// AllowOrigins: []string{"*"},
+		// AllowMethods: []string{"POST", "GET"},
 		AllowHeaders: []string{"Content-Type", "Authorization"},
 		// 你不加这个，前端是拿不到的
 		ExposeHeaders: []string{"x-jwt-token", "x-refresh-token"},

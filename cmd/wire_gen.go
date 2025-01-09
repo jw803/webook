@@ -7,7 +7,7 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/google/wire"
 	article3 "github.com/jw803/webook/internal/interface/web/article"
 	"github.com/jw803/webook/internal/interface/web/user"
 	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
@@ -22,7 +22,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitWebServer() *gin.Engine {
+func InitApp() *App {
 	cmdable := ioc.InitRedis()
 	handler := jwtx.NewRedisHandler(cmdable)
 	logger := ioc.InitLogger()
@@ -31,8 +31,8 @@ func InitWebServer() *gin.Engine {
 	userDAO := dao.NewGORMUserDAO(db)
 	userCache := cache.NewRedisUserCache(cmdable)
 	userRepository := repository.NewCachedUserRepository(userDAO, userCache)
-	userService := service.NewUserService(userRepository)
-	codeCache := cache.NewRedisCodeCache(cmdable)
+	userService := service.NewUserService(userRepository, logger)
+	codeCache := cache.NewRedisCodeCache(cmdable, logger)
 	codeRepository := repository.NewCachedCodeRepository(codeCache)
 	smsService := ioc.InitSmsMemoryService(cmdable)
 	codeService := service.NewSMSCodeService(codeRepository, smsService)
@@ -42,6 +42,17 @@ func InitWebServer() *gin.Engine {
 	articleRepository := article2.NewArticleRepository(articleDAO, articleCache)
 	articleService := service.NewArticleService(articleRepository)
 	articleHandler := article3.NewArticleHandler(articleService, logger)
-	engine := ioc.InitWebServer(v, userHandler, articleHandler)
-	return engine
+	v2 := ioc.InitWebServer(v, userHandler, articleHandler)
+	v3 := ioc.NewConsumers()
+	app := &App{
+		webServer: v2,
+		consumers: v3,
+	}
+	return app
 }
+
+// wire.go:
+
+var eventProvider = wire.NewSet(ioc.NewConsumers)
+
+var webProvider = wire.NewSet(jwtx.NewRedisHandler, user.NewUserHandler, article3.NewArticleHandler, ioc.GinMiddlewares, ioc.InitWebServer)

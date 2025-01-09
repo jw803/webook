@@ -3,7 +3,6 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"github.com/jw803/webook/internal/interface/web/article"
 	"github.com/jw803/webook/internal/interface/web/user"
@@ -17,7 +16,20 @@ import (
 	"github.com/jw803/webook/ioc"
 )
 
-func InitWebServer() *gin.Engine {
+var eventProvider = wire.NewSet(
+	ioc.NewConsumers,
+)
+
+var webProvider = wire.NewSet(
+	jwtx.NewRedisHandler,
+	user.NewUserHandler,
+	article.NewArticleHandler,
+
+	ioc.GinMiddlewares,
+	ioc.InitWebServer,
+)
+
+func InitApp() *App {
 	wire.Build(
 		ioc.InitDB, ioc.InitRedis,
 		ioc.InitLogger,
@@ -36,16 +48,13 @@ func InitWebServer() *gin.Engine {
 		service.NewUserService,
 		service.NewSMSCodeService,
 		service.NewArticleService,
-
 		ioc.InitSmsMemoryService,
 
-		jwtx.NewRedisHandler,
-		user.NewUserHandler,
-		article.NewArticleHandler,
+		eventProvider,
+		webProvider,
 
-		ioc.InitWebServer,
-		ioc.GinMiddlewares,
+		wire.Struct(new(App), "*"),
 	)
 	// 這邊隨便
-	return new(gin.Engine)
+	return new(App)
 }

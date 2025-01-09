@@ -23,7 +23,7 @@ type RedisJWTHandler struct {
 	l   loggerx.Logger
 }
 
-func NewRedisHandler(cmd redis.Cmdable) Handler {
+func NewRedisHandler(cmd redis.Cmdable) JWTHandler {
 	return &RedisJWTHandler{
 		cmd: cmd,
 	}
@@ -81,7 +81,7 @@ func (h *RedisJWTHandler) CheckSession(ctx *gin.Context, ssid string) error {
 func (h *RedisJWTHandler) ExtractToken(ctx *gin.Context) string {
 	// 我现在用 JWT 来校验
 	tokenHeader := ctx.GetHeader("Authorization")
-	//segs := strings.SplitN(tokenHeader, " ", 2)
+	// segs := strings.SplitN(tokenHeader, " ", 2)
 	segs := strings.Split(tokenHeader, " ")
 	if len(segs) != 2 {
 		return ""

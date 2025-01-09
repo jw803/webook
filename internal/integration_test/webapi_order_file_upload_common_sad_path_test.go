@@ -5,6 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/jw803/webook/config"
+	"github.com/jw803/webook/internal/integration_test/startup"
+	"github.com/jw803/webook/internal/integration_test/utils"
+	"github.com/jw803/webook/internal/integration_test/utils/test_data"
+	"github.com/jw803/webook/internal/pkg/ginx"
+	"github.com/jw803/webook/pkg/loggerx"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -12,10 +18,6 @@ import (
 	"testing"
 	"time"
 
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/ginx/response"
-
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/internal/repository/oneship"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/internal/repository/shopline"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -23,28 +25,13 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.uber.org/mock/gomock"
-
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/config"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/internal/integration_test/startup"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/internal/integration_test/utils"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/internal/integration_test/utils/test_data"
-	clientmongo "bitbucket.org/starlinglabs/cst-wstyle-integration/internal/repository/dao/mongodb/client"
-	erpsalefilemongo "bitbucket.org/starlinglabs/cst-wstyle-integration/internal/repository/dao/mongodb/erp_order_file"
-	merchantconfigmongo "bitbucket.org/starlinglabs/cst-wstyle-integration/internal/repository/dao/mongodb/merchant_config"
-	orderfileuploadlogmongo "bitbucket.org/starlinglabs/cst-wstyle-integration/internal/repository/dao/mongodb/order_file_upload_log"
-	saleordermongo "bitbucket.org/starlinglabs/cst-wstyle-integration/internal/repository/dao/mongodb/sale_order"
-	staffmongo "bitbucket.org/starlinglabs/cst-wstyle-integration/internal/repository/dao/mongodb/staff"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/email"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/email/local"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/ginx"
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/logging"
 )
 
 type WebAPIOrderFileUploadCommonSadTestSuite struct {
 	suite.Suite
 	mongoClient           *mongo.Client
 	mdb                   *mongo.Database
-	logger                logging.Logger
+	logger                loggerx.Logger
 	orderFileUploadLogCol *mongo.Collection
 	saleOrderCol          *mongo.Collection
 	erpOrderFileCol       *mongo.Collection
