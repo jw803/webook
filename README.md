@@ -38,15 +38,14 @@
 
 ### Completed Milestones
 * Optimized the original course project structure by referencing various Go project architectures.
-* Learned error code handling from this column and implemented it in this project as well as in my current company's projects, improving maintainability by avoiding deep error propagation.
 * Introduced Dependency Injection (DI) and Inversion of Control (IoC) to make the project scalable and testable.
-* Implemented system error categorization, enabling quick understanding of the severity of system errors and reducing impact on day-to-day development.
 * Integrated with a third-party SMS provider while considering failover, rate limiting, and retries. Used the Decorator pattern to flexibly enhance the security and availability of the SMS service, as shown in the /internal/service/sms folder.
 * Built a secure authentication system using browser user agent, JWT, cookies, and sessions.
 * Implemented the Sliding Window Rate Limit algorithm.
 * Designed and implemented Redis Lua scripts to handle concurrency issues in the login_sms_send_code.go SMS sending API. This ensured atomic rate-limiting operations under high traffic, preventing duplicate sends and improving overall system stability and user experience.
+* Learned error code handling from the [course](https://time.geekbang.org/column/intro/418?tab=catalo) and implemented it in this project as well as in my current company's projects, improving maintainability by avoiding deep error propagation.
 * Designed and implemented a severity-based error classification system integrated into application logs, categorizing issues into four priority levels:
-  * This classification improved the team's response efficiency and clarified prioritization in incident handling.
+  * This classification reduced product operation impact on day-to-day development.
   * P0: Critical system errors requiring immediate attention 
   * P1: High-priority errors to be resolved within the same day 
   * P2: Lower-risk issues that can be addressed later in the week 
