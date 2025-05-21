@@ -63,9 +63,9 @@
   * Feed Stream Design and Implementation 
   * Design and Implementation of an Instant Messaging (IM) Service
 * CI/CD Improvements
-  * To move .env, Terraform files, and secrets to a separate repository, using git-crypt for encryption to enhance security.
-  * To introduce Git Submodules to integrate source code and env repositories for streamlined deployment.
-  * Used Terraform under the deployment directory to:
+  * Move .env, Terraform files, and secrets to a separate repository, using git-crypt for encryption to enhance security.
+  * Introduce Git Submodules to integrate source code and env repositories for streamlined deployment.
+  * Use Terraform under the deployment directory to:
     * Create CI/CD IAM roles 
     * Deploy services to AWS EKS 
     * Provision necessary AWS resources
