@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	articlehdl "github.com/jw803/webook/internal/interface/web/article"
 	userhdl "github.com/jw803/webook/internal/interface/web/user"
+	"github.com/jw803/webook/internal/interface/web/wechat"
 	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/pkg/ginx/middlewares/access_log"
 	"github.com/jw803/webook/internal/pkg/ginx/middlewares/auth_guard"
@@ -14,12 +15,23 @@ import (
 	"time"
 )
 
-func InitWebServer(mdls []gin.HandlerFunc, userHdl *userhdl.UserHandler, articleHdl *articlehdl.ArticleHandler) *gin.Engine {
+const (
+	main = "main"
+)
+
+func InitWebServer(mdls []gin.HandlerFunc,
+	userHdl *userhdl.UserHandler,
+	articleHdl *articlehdl.ArticleHandler,
+	oauth2WechatHdl *wechat.OAuth2WechatHandler) map[string]*gin.Engine {
+	serverMap := make(map[string]*gin.Engine)
 	server := gin.Default()
 	server.Use(mdls...)
 	userHdl.RegisterRoutes(server)
 	articleHdl.RegisterRoutes(server)
-	return server
+	oauth2WechatHdl.RegisterRoutes(server)
+
+	serverMap[main] = server
+	return serverMap
 }
 
 func GinMiddlewares(jwtHdl jwtx.Handler, l loggerx.Logger) []gin.HandlerFunc {

@@ -32,7 +32,7 @@ func (h *ArticleHandler) RegisterRoutes(server *gin.Engine) {
 	ug.GET("/detail/:id", ginx.WrapClaimsParam[jwtx.UserClaims, getArticleParam](h.Detail))
 
 	pub := ug.Group("/pub")
-	pub.GET("/:id", ginx.WrapClaimsParam[jwtx.UserClaims, getPubArticleParam](h.PubDetail)
+	pub.GET("/:id", ginx.WrapClaimsParam[jwtx.UserClaims, getPubArticleParam](h.PubDetail))
 }
 
 type articleVO struct {

@@ -38,7 +38,7 @@ func NewUserService(repo repository.UserRepository, l loggerx.Logger) UserServic
 //func NewUserServiceV1(f repository.UserRepositoryFactory) UserService {
 //	return &userService{
 //		// 我在这里，不同的 factory，会创建出来不同实现
-//		repo: f.NewRepo(),
+//		codeRepo: f.NewRepo(),
 //	}
 //}
 
@@ -110,7 +110,7 @@ func (svc *userService) FindOrCreate(ctx context.Context,
 func (svc *userService) FindOrCreateByWechat(ctx context.Context,
 	info domain.WechatInfo) (domain.User, error) {
 	u, err := svc.repo.FindByWechat(ctx, info.OpenID)
-	if err != repository.ErrUserNotFound {
+	if !errorx.IsCode(err, errcode.ErrUserNotFound) {
 		return u, err
 	}
 	u = domain.User{

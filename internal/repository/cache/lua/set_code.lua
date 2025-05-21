@@ -8,11 +8,13 @@ local cntKey = key..":cnt"
 local val= ARGV[1]
 -- 过期时间
 local ttl = tonumber(redis.call("ttl", key))
+// -1 代表key存在，但沒有設置ttl
 if ttl == -1 then
     --    key 存在，但是没有过期时间
     -- 系统错误，你的同事手贱，手动设置了这个 key，但是没给过期时间
     return -2
     --    540 = 600-60 九分钟
+    // -2 代表key不存在
 elseif ttl == -2 or ttl < 540 then
     redis.call("set", key, val)
     redis.call("expire", key, 600)

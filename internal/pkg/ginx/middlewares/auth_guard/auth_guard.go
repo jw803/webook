@@ -21,14 +21,14 @@ type Claims struct {
 
 type JWTAuthzMiddlewareBuilder struct {
 	publicPaths sets.Set[string]
-	jwt_handler.JWTHandler
+	jwtx.Handler
 	l loggerx.Logger
 }
 
-func NewJWTAuthzHandler(jwtHandler jwt_handler.JWTHandler, l loggerx.Logger) *JWTAuthzMiddlewareBuilder {
+func NewJWTAuthzHandler(jwtHandler jwtx.Handler, l loggerx.Logger) *JWTAuthzMiddlewareBuilder {
 	return &JWTAuthzMiddlewareBuilder{
 		publicPaths: hashset.New[string](),
-		JWTHandler:  jwtHandler,
+		Handler:     jwtHandler,
 		l:           l,
 	}
 }
@@ -43,7 +43,7 @@ func (b *JWTAuthzMiddlewareBuilder) Build() gin.HandlerFunc {
 		if b.publicPaths.Contains(ctx.Request.URL.Path) {
 			return
 		}
-		authToken := b.ExtractTokenString(ctx)
+		authToken := b.ExtractToken(ctx)
 		c := Claims{}
 		token, err := jwt.ParseWithClaims(authToken, &c, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

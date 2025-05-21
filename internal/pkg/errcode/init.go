@@ -7,6 +7,7 @@ func init() {
 	register(ErrUnknown, 500, "Internal server error")
 	register(ErrBind, 400, "Invalid request format")
 	register(ErrValidation, 400, "Validation failed")
+	register(ErrCookieMissing, 400, "Cookie missing")
 	register(ErrTokenMissing, 401, "Token missing")
 	register(ErrTokenInvalid, 401, "Token invalid")
 	register(ErrSessionInvalid, 401, "Session invalid")
@@ -42,4 +43,7 @@ func init() {
 
 	register(ErrSMSCodeSendTooFrequently, 401, "send sms code too frequency")
 	register(ErrSMSCodeInvalid, 400, "sms verification code is incorrect")
+
+	register(ErrWeChatStateMismatch, 400, "state mismatch")
+	register(ErrWeChatVerificationCodeInvalid, 400, "wecaht verification code invalid")
 }

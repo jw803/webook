@@ -9,7 +9,7 @@ import (
 	"math/rand"
 )
 
-var codeTplId atomic.String = atomic.String{}
+var codeTplId = atomic.String{}
 
 type CodeService interface {
 	Send(ctx context.Context,
@@ -20,8 +20,8 @@ type CodeService interface {
 }
 
 type codeService struct {
-	repo   repository.CodeRepository
-	smsSvc sms.Service
+	codeRepo repository.CodeRepository
+	smsSvc   sms.Service
 	//tplId string
 }
 
@@ -32,8 +32,8 @@ func NewSMSCodeService(repo repository.CodeRepository, smsSvc sms.Service) CodeS
 	//})
 
 	return &codeService{
-		repo:   repo,
-		smsSvc: smsSvc,
+		codeRepo: repo,
+		smsSvc:   smsSvc,
 	}
 }
 
@@ -45,7 +45,7 @@ func (svc *codeService) Send(ctx context.Context,
 	// 生成一个验证码
 	code := svc.generateCode()
 	// 塞进去 Redis
-	err := svc.repo.Store(ctx, biz, phone, code)
+	err := svc.codeRepo.Store(ctx, biz, phone, code)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func (svc *codeService) Send(ctx context.Context,
 
 func (svc *codeService) Verify(ctx context.Context, biz string,
 	phone string, inputCode string) (bool, error) {
-	return svc.repo.Verify(ctx, biz, phone, inputCode)
+	return svc.codeRepo.Verify(ctx, biz, phone, inputCode)
 }
 
 func (svc *codeService) generateCode() string {

@@ -69,6 +69,7 @@ func (h *RedisJWTHandler) CheckSession(ctx *gin.Context, ssid string) error {
 	case redis.Nil:
 		return nil
 	case nil:
+		// Exists 會依據是否存在去進行+1計數，不存在的話結果會是0
 		if val == 0 {
 			return nil
 		}

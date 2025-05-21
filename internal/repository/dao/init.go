@@ -5,6 +5,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitTable(db *gorm.DB) error {
+func InitTables(db *gorm.DB) error {
 	return db.AutoMigrate(&Users{}, &article.Article{}, &article.PublishArticle{})
 }

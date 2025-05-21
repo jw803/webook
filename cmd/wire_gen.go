@@ -7,9 +7,11 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
+	"github.com/google/wire"
+	article4 "github.com/jw803/webook/internal/interface/event/article"
 	article3 "github.com/jw803/webook/internal/interface/web/article"
 	"github.com/jw803/webook/internal/interface/web/user"
+	"github.com/jw803/webook/internal/interface/web/wechat"
 	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/repository"
 	article2 "github.com/jw803/webook/internal/repository/article"
@@ -18,11 +20,12 @@ import (
 	"github.com/jw803/webook/internal/repository/dao/article"
 	"github.com/jw803/webook/internal/service"
 	"github.com/jw803/webook/ioc"
+	"github.com/jw803/webook/pkg/samarax"
 )
 
 // Injectors from wire.go:
 
-func InitWebServer() *gin.Engine {
+func InitAPP() *App {
 	cmdable := ioc.InitRedis()
 	handler := jwtx.NewRedisHandler(cmdable)
 	logger := ioc.InitLogger()
@@ -31,8 +34,8 @@ func InitWebServer() *gin.Engine {
 	userDAO := dao.NewGORMUserDAO(db)
 	userCache := cache.NewRedisUserCache(cmdable)
 	userRepository := repository.NewCachedUserRepository(userDAO, userCache)
-	userService := service.NewUserService(userRepository)
-	codeCache := cache.NewRedisCodeCache(cmdable)
+	userService := service.NewUserService(userRepository, logger)
+	codeCache := cache.NewRedisCodeCache(cmdable, logger)
 	codeRepository := repository.NewCachedCodeRepository(codeCache)
 	smsService := ioc.InitSmsMemoryService(cmdable)
 	codeService := service.NewSMSCodeService(codeRepository, smsService)
@@ -42,6 +45,26 @@ func InitWebServer() *gin.Engine {
 	articleRepository := article2.NewArticleRepository(articleDAO, articleCache)
 	articleService := service.NewArticleService(articleRepository)
 	articleHandler := article3.NewArticleHandler(articleService, logger)
-	engine := ioc.InitWebServer(v, userHandler, articleHandler)
-	return engine
+	wechatService := ioc.InitWechatService(logger)
+	oAuth2WechatHandler := wechat.NewOAuth2WechatHandler(wechatService, handler, userService, logger)
+	v2 := ioc.InitWebServer(v, userHandler, articleHandler, oAuth2WechatHandler)
+	interactiveDAO := dao.NewGORMInteractiveDAO(db)
+	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
+	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, logger, interactiveCache)
+	client := ioc.InitSaramaClient()
+	interactiveReadEventConsumer := article4.NewInteractiveReadEventConsumer(interactiveRepository, client, logger)
+	v3 := ioc.NewConsumers(interactiveReadEventConsumer)
+	app := &App{
+		webServer: v2,
+		consumers: v3,
+	}
+	return app
 }
+
+// wire.go:
+
+var thirdProvider = wire.NewSet(ioc.InitDB, ioc.InitRedis, ioc.InitSaramaClient, ioc.InitLogger, ioc.NewNowFunc, ioc.NewUuidFn)
+
+var eventProvider = wire.NewSet(ioc.NewConsumers, article4.NewInteractiveReadEventConsumer, samarax.NewSamaraxBaseHandler)
+
+var webProvider = wire.NewSet(ioc.InitWebServer, ioc.GinMiddlewares, jwtx.NewRedisHandler, user.NewUserHandler, article3.NewArticleHandler, wechat.NewOAuth2WechatHandler)

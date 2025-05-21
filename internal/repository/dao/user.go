@@ -8,12 +8,9 @@ import (
 	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/pkg/errorx"
 	"github.com/jw803/webook/pkg/loggerx"
+	"github.com/jw803/webook/pkg/timex"
 	"gorm.io/gorm"
 	"time"
-)
-
-var (
-	ErrUserNotFound = gorm.ErrRecordNotFound
 )
 
 type UserDAO interface {
@@ -26,27 +23,31 @@ type UserDAO interface {
 }
 
 type GORMUserDAO struct {
-	db *gorm.DB
-	l  loggerx.Logger
+	db      *gorm.DB
+	l       loggerx.Logger
+	nowFunc timex.NowFunc
 }
 
-func NewGORMUserDAO(db *gorm.DB) UserDAO {
+func NewGORMUserDAO(db *gorm.DB, l loggerx.Logger, nowFunc timex.NowFunc) UserDAO {
 	res := &GORMUserDAO{
-		db: db,
+		db:      db,
+		l:       l,
+		nowFunc: nowFunc,
 	}
-	//viper.OnConfigChange(func(in fsnotify.Event) {
-	//	db, err := gorm.Open(mysql.Open())
-	//	pt := unsafe.Pointer(&res.db)
-	//	atomic.StorePointer(&pt, unsafe.Pointer(&db))
-	//})
 	return res
 }
 
 func (dao *GORMUserDAO) FindByWechat(ctx context.Context, openID string) (Users, error) {
 	var u Users
 	err := dao.db.WithContext(ctx).Where("wechat_open_id = ?", openID).First(&u).Error
-	//err := dao.p().WithContext(ctx).Where("wechat_open_id = ?", openID).First(&u).Error
-	//err := dao.db.WithContext(ctx).First(&u, "email = ?", email).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		dao.l.Error(ctx, "user not found", loggerx.Error(err))
+		return u, errorx.WithCode(errcode.ErrUserNotFound, err.Error())
+	}
+	if err != nil {
+		dao.l.Error(ctx, "db error", loggerx.Error(err))
+		return u, errorx.WithCode(errcode.ErrDatabase, err.Error())
+	}
 	return u, err
 }
 

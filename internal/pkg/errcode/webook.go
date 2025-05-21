@@ -16,4 +16,7 @@ const (
 
 	ErrArticleNotFound
 	ErrMaliciousUser
+
+	ErrWeChatStateMismatch
+	ErrWeChatVerificationCodeInvalid
 )

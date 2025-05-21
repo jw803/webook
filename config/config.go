@@ -65,3 +65,13 @@ func loadFromEnvironmentVariables() {
 		panic(err)
 	}
 }
+
+func SetTestConfig() {
+	env = Env{
+		AppEnv:       "local",
+		AppRole:      "webapi",
+		AppDB:        "root:root@tcp(localhost:13316)/webook",
+		AppRedis:     "localhost:6379",
+		APPSecretKey: "",
+	}
+}

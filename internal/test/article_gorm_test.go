@@ -44,7 +44,7 @@ func (s *ArticleGORMHandlerTestSuite) SetupSuite() {
 
 func (s *ArticleGORMHandlerTestSuite) TearDownTest() {
 	s.db.Exec("TRUNCATE TABLE articles")
-	s.db.Exec("TRUNCATE TABLE publish_articles")
+	s.db.Exec("TRUNCATE TABLE published_articles")
 }
 
 func (s *ArticleGORMHandlerTestSuite) TestArticleHandler_Edit() {

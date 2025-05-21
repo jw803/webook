@@ -17,6 +17,7 @@ const (
 	// ErrValidation - 400: Validation failed.
 	ErrValidation
 
+	ErrCookieMissing
 	// ErrTokenMissing - 401: Token missing.
 	ErrTokenMissing
 

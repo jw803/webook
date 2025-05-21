@@ -39,6 +39,6 @@ func (h *ArticleHandler) Detail(ctx *gin.Context, usr *jwtx.UserClaims, params g
 		//Author: art.Author
 		Ctime: art.Ctime.Format(time.DateTime),
 		Utime: art.Utime.Format(time.DateTime),
-	},
+	}
 	return result, nil
 }

@@ -1,22 +1,31 @@
 package startup
 
 import (
-	"os"
-
-	"bitbucket.org/starlinglabs/cst-wstyle-integration/pkg/logging"
+	"github.com/jw803/webook/config"
+	"github.com/jw803/webook/pkg/loggerx"
+	"github.com/jw803/webook/pkg/trace_id"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-func InitLogger() logging.Logger {
-	consoleDebugging := zapcore.Lock(os.Stdout)
-	consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
-	l := zap.New(
-		zapcore.NewCore(consoleEncoder, consoleDebugging, zapcore.DebugLevel),
-		zap.AddCaller(),
-		zap.AddCallerSkip(1),
-		zap.AddStacktrace(zapcore.ErrorLevel),
-	)
-	logger := logging.NewZapLogger(l)
+func InitLogger() loggerx.Logger {
+	env := config.Get().AppEnv
+
+	var logger loggerx.Logger
+	switch env {
+	case "test":
+		logger = loggerx.NewNoOpLogger()
+	default:
+		cfg := zap.NewDevelopmentConfig()
+		err := viper.UnmarshalKey("log", &cfg)
+		if err != nil {
+			panic(err)
+		}
+		l, err := cfg.Build()
+		if err != nil {
+			panic(err)
+		}
+		logger = loggerx.NewZapLogger(trace_id.NewNormalTraceId(), l)
+	}
 	return logger
 }

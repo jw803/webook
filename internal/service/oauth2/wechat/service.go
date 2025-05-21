@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jw803/webook/internal/domain"
+	"github.com/jw803/webook/internal/pkg/errcode"
+	"github.com/jw803/webook/pkg/errorx"
 	"github.com/jw803/webook/pkg/loggerx"
 	"net/http"
 	"net/url"
@@ -13,7 +15,7 @@ import (
 var redirectURI = url.PathEscape("https://meoying.com/oauth2/wechat/callback")
 
 type Service interface {
-	AuthURL(ctx context.Context, state string) (string, error)
+	AuthURL(ctx context.Context, state string) string
 	VerifyCode(ctx context.Context, code string) (domain.WechatInfo, error)
 }
 
@@ -77,8 +79,9 @@ func (s *service) VerifyCode(ctx context.Context, code string) (domain.WechatInf
 	}
 
 	if res.ErrCode != 0 {
-		return domain.WechatInfo{},
-			fmt.Errorf("微信返回错误响应，错误码：%d，错误信息：%s", res.ErrCode, res.ErrMsg)
+		errMsg := fmt.Sprintf("微信返回错误响应，错误码：%d，错误信息：%s", res.ErrCode, res.ErrMsg)
+		s.logger.P3(ctx, errMsg)
+		return domain.WechatInfo{}, errorx.WithCode(errcode.ErrWeChatVerificationCodeInvalid, errMsg)
 	}
 
 	// 攻击者的 state
@@ -93,11 +96,11 @@ func (s *service) VerifyCode(ctx context.Context, code string) (domain.WechatInf
 	}, nil
 }
 
-func (s *service) AuthURL(ctx context.Context, state string) (string, error) {
+func (s *service) AuthURL(ctx context.Context, state string) string {
 	const urlPattern = "https://open.weixin.qq.com/connect/qrconnect?appid=%s&redirect_uri=%s&response_type=code&scope=snsapi_login&state=%s#wechat_redirect"
 	// 如果在这里存 state，假如说我存 redis
 	//s.cmd.Set(ctx, "my-state"+state, state, time.Minute)
-	return fmt.Sprintf(urlPattern, s.appId, redirectURI, state), nil
+	return fmt.Sprintf(urlPattern, s.appId, redirectURI, state)
 }
 
 type Result struct {
