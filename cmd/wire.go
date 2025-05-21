@@ -33,7 +33,7 @@ var eventProvider = wire.NewSet(
 )
 
 var webProvider = wire.NewSet(
-	ioc.InitWeberver,
+	ioc.InitWebServer,
 	ioc.GinMiddlewares,
 	jwtx.NewRedisHandler,
 	user.NewUserHandler,
@@ -41,7 +41,7 @@ var webProvider = wire.NewSet(
 	wechat.NewOAuth2WechatHandler,
 )
 
-func InitAPP() *App {
+func InitApp() *App {
 	wire.Build(
 		thirdProvider,
 

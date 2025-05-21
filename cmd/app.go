@@ -1,12 +1,11 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/jw803/webook/internal/interface/event"
 	"net/http"
 	"os"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 const (

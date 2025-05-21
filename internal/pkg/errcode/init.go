@@ -41,7 +41,7 @@ func init() {
 
 	register(ErrArticleNotFound, 404, "article not found")
 
-	register(ErrSMSCodeSendTooFrequently, 401, "send sms code too frequency")
+	register(ErrSMSCodeSendTooFrequently, 429, "send sms code too frequency")
 	register(ErrSMSCodeInvalid, 400, "sms verification code is incorrect")
 
 	register(ErrWeChatStateMismatch, 400, "state mismatch")

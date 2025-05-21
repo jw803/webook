@@ -8,7 +8,7 @@ import (
 )
 
 type loginSMSSendCodeReq struct {
-	Phone string `json:"phone"`
+	Phone string `json:"phone" binding:"required""`
 }
 
 func (h *UserHandler) SendLoginSMSCode(ctx *gin.Context, req loginSMSSendCodeReq) (any, error) {

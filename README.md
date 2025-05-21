@@ -33,22 +33,27 @@
     * ratelimit: Rate limit utility package
     * errorx: Error code utility package
     * trace_id: Trace ID utility package
+    * samarax: message handlers for both single and batch processing based on Samara
 * scripts: Scripts for environment management and infrastructure deployment
 
 ### Completed Milestones
 * Optimized the original course project structure by referencing various Go project architectures.
 * Learned error code handling from this column and implemented it in this project as well as in my current company's projects, improving maintainability by avoiding deep error propagation.
-* Mastered TDD concepts and techniques from this column and conducted a technical sharing session within the company.
-  * Slides: Google Slides：[TDD Sharing](https://docs.google.com/presentation/d/1_smkX5qbo1wwg1eTw75Vydz-kQfGb5Gd/edit?usp=sharing&ouid=103824221418435923614&rtpof=true&sd=true)
 * Introduced Dependency Injection (DI) and Inversion of Control (IoC) to make the project scalable and testable.
 * Implemented system error categorization, enabling quick understanding of the severity of system errors and reducing impact on day-to-day development.
 * Integrated with a third-party SMS provider while considering failover, rate limiting, and retries. Used the Decorator pattern to flexibly enhance the security and availability of the SMS service, as shown in the /internal/service/sms folder.
 * Built a secure authentication system using browser user agent, JWT, cookies, and sessions.
 * Implemented the Sliding Window Rate Limit algorithm.
+* Designed and implemented Redis Lua scripts to handle concurrency issues in the login_sms_send_code.go SMS sending API. This ensured atomic rate-limiting operations under high traffic, preventing duplicate sends and improving overall system stability and user experience.
+* Designed and implemented a severity-based error classification system integrated into application logs, categorizing issues into four priority levels:
+  * This classification improved the team's response efficiency and clarified prioritization in incident handling.
+  * P0: Critical system errors requiring immediate attention 
+  * P1: High-priority errors to be resolved within the same day 
+  * P2: Lower-risk issues that can be addressed later in the week 
+  * P3: Informational logs or user-side errors not necessarily related to system faults
 ### Future Plan
 * Course Modules in Progress
-  * Kafka
-  * Distributed Task Scheduling
+  * Distributed Job Scheduling
   * Introduction to DDD and Splitting Monolithic Applications into Microservices 
   * Zero-Downtime Data Migration Solutions 
   * Microservices Development: Service Registration and Discovery, Load Balancing, and Service Governance 

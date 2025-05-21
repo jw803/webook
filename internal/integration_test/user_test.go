@@ -69,7 +69,7 @@ func (s *WebAPIUserTestSuite) TestUserHandler_SendSMSCode() {
 		wantBody ginx.Response
 	}{
 		{
-			name: "发送成功的用例",
+			name: "[Happy Path] sms is sent successfully",
 			mock: func(t *testing.T, ctrl *gomock.Controller) *gin.Engine {
 				nowFunc := startup.NewNowFunc("2025-01-01T00:00:00Z")
 				userDao := dao.NewGORMUserDAO(s.db, s.logger, nowFunc)
@@ -101,19 +101,35 @@ func (s *WebAPIUserTestSuite) TestUserHandler_SendSMSCode() {
 			},
 		},
 		{
-			name: "未输入手机号码",
+			name: "[Sad Path]phone number is missing",
+			mock: func(t *testing.T, ctrl *gomock.Controller) *gin.Engine {
+				nowFunc := startup.NewNowFunc("2025-01-01T00:00:00Z")
+				userDao := dao.NewGORMUserDAO(s.db, s.logger, nowFunc)
+				userHandler := startup.InitUserhandler(userDao)
+				return s.setServer(userHandler)
+				server := gin.New()
+				return server
+			},
 			before: func(t *testing.T) {
 
 			},
 			after:    func(t *testing.T) {},
-			wantCode: http.StatusOK,
+			wantCode: http.StatusBadRequest,
 			wantBody: ginx.Response{
-				Code:    4,
-				Message: "请输入手机号码",
+				Code:    100005,
+				Message: "Validation failed",
 			},
 		},
 		{
-			name: "发送太频繁",
+			name: "[Sad Path]SMS sending rate limit exceeded",
+			mock: func(t *testing.T, ctrl *gomock.Controller) *gin.Engine {
+				nowFunc := startup.NewNowFunc("2025-01-01T00:00:00Z")
+				userDao := dao.NewGORMUserDAO(s.db, s.logger, nowFunc)
+				userHandler := startup.InitUserhandler(userDao)
+				return s.setServer(userHandler)
+				server := gin.New()
+				return server
+			},
 			before: func(t *testing.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 				defer cancel()
@@ -130,14 +146,20 @@ func (s *WebAPIUserTestSuite) TestUserHandler_SendSMSCode() {
 				assert.Equal(t, "123456", code)
 			},
 			phone:    "15212345678",
-			wantCode: http.StatusOK,
+			wantCode: http.StatusTooManyRequests,
 			wantBody: ginx.Response{
-				Code:    4,
-				Message: "短信发送太频繁，请稍后再试",
+				Code:    110008,
+				Message: "send sms code too frequency",
 			},
 		},
 		{
-			name: "系统错误",
+			name: "[Sad Path]If the system contains a key without an expiration time, it likely means someone accidentally set it manually.",
+			mock: func(t *testing.T, ctrl *gomock.Controller) *gin.Engine {
+				nowFunc := startup.NewNowFunc("2025-01-01T00:00:00Z")
+				userDao := dao.NewGORMUserDAO(s.db, s.logger, nowFunc)
+				userHandler := startup.InitUserhandler(userDao)
+				return s.setServer(userHandler)
+			},
 			before: func(t *testing.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 				defer cancel()
@@ -154,10 +176,10 @@ func (s *WebAPIUserTestSuite) TestUserHandler_SendSMSCode() {
 				assert.Equal(t, "123456", code)
 			},
 			phone:    "15212345678",
-			wantCode: http.StatusOK,
+			wantCode: http.StatusInternalServerError,
 			wantBody: ginx.Response{
-				Code:    5,
-				Message: "系统错误",
+				Code:    100102,
+				Message: "Internal server error",
 			},
 		},
 	}

@@ -13,14 +13,14 @@ import (
 type OAuth2WechatHandler struct {
 	svc     wechat.Service
 	userSvc service.UserService
-	jwtx.Handler
+	jwtx.JWTHandler
 	key             []byte
 	stateCookieName string
 	l               loggerx.Logger
 }
 
 func NewOAuth2WechatHandler(svc wechat.Service,
-	hdl jwtx.Handler,
+	hdl jwtx.JWTHandler,
 	userSvc service.UserService,
 	l loggerx.Logger) *OAuth2WechatHandler {
 	return &OAuth2WechatHandler{
@@ -28,7 +28,7 @@ func NewOAuth2WechatHandler(svc wechat.Service,
 		userSvc:         userSvc,
 		key:             []byte("k6CswdUm77WKcbM68UQUuxVsHSpTCwgB"),
 		stateCookieName: "jwt-state",
-		Handler:         hdl,
+		JWTHandler:      hdl,
 		l:               l,
 	}
 }

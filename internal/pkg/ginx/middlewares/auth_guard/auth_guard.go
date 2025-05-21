@@ -33,12 +33,12 @@ func NewJWTAuthzHandler(jwtHandler jwtx.JWTHandler, l loggerx.Logger) JWTAuthzMi
 	}
 }
 
-func (b *JWTAuthzMiddlewareBuilder) IgnorePaths(path string) *JWTAuthzMiddlewareBuilder {
+func (b JWTAuthzMiddlewareBuilder) IgnorePaths(path string) JWTAuthzMiddlewareBuilder {
 	b.publicPaths.Add(path)
 	return b
 }
 
-func (b *JWTAuthzMiddlewareBuilder) Build() gin.HandlerFunc {
+func (b JWTAuthzMiddlewareBuilder) Build() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if b.publicPaths.Contains(ctx.Request.URL.Path) {
 			return

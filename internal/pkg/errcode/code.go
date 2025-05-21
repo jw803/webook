@@ -55,7 +55,7 @@ func (coder ErrCode) HTTPStatus() int {
 
 // nolint: unparam
 func register(code int, httpStatus int, extMsg string, refs ...string) {
-	found := slices.Contains([]int{200, 400, 401, 403, 404, 500}, httpStatus)
+	found := slices.Contains([]int{200, 400, 401, 403, 404, 429, 500}, httpStatus)
 	if !found {
 		panic("http code not in `200, 400, 401, 403, 404, 500`")
 	}

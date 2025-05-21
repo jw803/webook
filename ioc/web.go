@@ -22,7 +22,8 @@ const (
 func InitWebServer(mdls []gin.HandlerFunc,
 	userHdl *userhdl.UserHandler,
 	articleHdl *articlehdl.ArticleHandler,
-	oauth2WechatHdl *wechat.OAuth2WechatHandler) map[string]*gin.Engine {
+	oauth2WechatHdl *wechat.OAuth2WechatHandler,
+) map[string]*gin.Engine {
 	serverMap := make(map[string]*gin.Engine)
 	server := gin.Default()
 	server.Use(mdls...)

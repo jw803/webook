@@ -11,6 +11,7 @@ import (
 	article4 "github.com/jw803/webook/internal/interface/event/article"
 	article3 "github.com/jw803/webook/internal/interface/web/article"
 	"github.com/jw803/webook/internal/interface/web/user"
+	"github.com/jw803/webook/internal/interface/web/wechat"
 	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/repository"
 	article2 "github.com/jw803/webook/internal/repository/article"
@@ -24,7 +25,7 @@ import (
 
 // Injectors from wire.go:
 
-func InitAPP() *App {
+func InitApp() *App {
 	cmdable := ioc.InitRedis()
 	jwtHandler := jwtx.NewRedisHandler(cmdable)
 	logger := ioc.InitLogger()
@@ -45,7 +46,9 @@ func InitAPP() *App {
 	articleRepository := article2.NewArticleRepository(articleDAO, articleCache)
 	articleService := service.NewArticleService(articleRepository)
 	articleHandler := article3.NewArticleHandler(articleService, logger)
-	v2 := ioc.InitWebServer(v, userHandler, articleHandler)
+	wechatService := ioc.InitWechatService(logger)
+	oAuth2WechatHandler := wechat.NewOAuth2WechatHandler(wechatService, jwtHandler, userService, logger)
+	v2 := ioc.InitWebServer(v, userHandler, articleHandler, oAuth2WechatHandler)
 	interactiveDAO := dao.NewGORMInteractiveDAO(db)
 	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
 	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, logger, interactiveCache)
@@ -65,4 +68,4 @@ var thirdProvider = wire.NewSet(ioc.InitDB, ioc.InitRedis, ioc.InitSaramaClient,
 
 var eventProvider = wire.NewSet(ioc.NewConsumers, article4.NewInteractiveReadEventConsumer, samarax.NewSamaraxBaseHandler)
 
-var webProvider = wire.NewSet(ioc.InitWebServer, ioc.GinMiddlewares, jwtx.NewRedisHandler, user.NewUserHandler, article3.NewArticleHandler)
+var webProvider = wire.NewSet(ioc.InitWebServer, ioc.GinMiddlewares, jwtx.NewRedisHandler, user.NewUserHandler, article3.NewArticleHandler, wechat.NewOAuth2WechatHandler)
