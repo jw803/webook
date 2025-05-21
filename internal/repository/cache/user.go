@@ -25,7 +25,7 @@ type RedisUserCache struct {
 	expiration time.Duration
 }
 
-func NewUserCacheV1(addr string) UserCache {
+func NewUserCacheV1() UserCache {
 	client := redis.NewClient(&redis.Options{})
 	return &RedisUserCache{
 		client:     client,
@@ -77,18 +77,18 @@ func (cache *RedisUserCache) key(id int64) string {
 }
 
 // main 函数里面初始化好
-//var RedisClient *redis.Client
+// var RedisClient *redis.Client
 
-//func GetUser(ctx context.Context, id int64) {
+// func GetUser(ctx context.Context, id int64) {
 //	RedisClient.Get()
-//}
+// }
 
-//type UnifyCache interface {
+// type UnifyCache interface {
 //	Get(ctx context.Context, key string)
 //	Set(ctx context.Context, key string, val any, expiration time.Duration)
-//}
+// }
 //
 //
-//type NewRedisCache() UnifyCache {
+// type NewRedisCache() UnifyCache {
 //
-//}
+// }

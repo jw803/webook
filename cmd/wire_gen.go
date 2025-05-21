@@ -11,7 +11,6 @@ import (
 	article4 "github.com/jw803/webook/internal/interface/event/article"
 	article3 "github.com/jw803/webook/internal/interface/web/article"
 	"github.com/jw803/webook/internal/interface/web/user"
-	"github.com/jw803/webook/internal/interface/web/wechat"
 	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/internal/repository"
 	article2 "github.com/jw803/webook/internal/repository/article"
@@ -27,11 +26,12 @@ import (
 
 func InitAPP() *App {
 	cmdable := ioc.InitRedis()
-	handler := jwtx.NewRedisHandler(cmdable)
+	jwtHandler := jwtx.NewRedisHandler(cmdable)
 	logger := ioc.InitLogger()
-	v := ioc.GinMiddlewares(handler, logger)
+	v := ioc.GinMiddlewares(jwtHandler, logger)
 	db := ioc.InitDB()
-	userDAO := dao.NewGORMUserDAO(db)
+	nowFunc := ioc.NewNowFunc()
+	userDAO := dao.NewGORMUserDAO(db, logger, nowFunc)
 	userCache := cache.NewRedisUserCache(cmdable)
 	userRepository := repository.NewCachedUserRepository(userDAO, userCache)
 	userService := service.NewUserService(userRepository, logger)
@@ -39,15 +39,13 @@ func InitAPP() *App {
 	codeRepository := repository.NewCachedCodeRepository(codeCache)
 	smsService := ioc.InitSmsMemoryService(cmdable)
 	codeService := service.NewSMSCodeService(codeRepository, smsService)
-	userHandler := user.NewUserHandler(userService, codeService, handler, logger)
+	userHandler := user.NewUserHandler(userService, codeService, jwtHandler, logger)
 	articleDAO := article.NewGORMArticleDAO(db)
 	articleCache := cache.NewRedisArticleCache(cmdable)
 	articleRepository := article2.NewArticleRepository(articleDAO, articleCache)
 	articleService := service.NewArticleService(articleRepository)
 	articleHandler := article3.NewArticleHandler(articleService, logger)
-	wechatService := ioc.InitWechatService(logger)
-	oAuth2WechatHandler := wechat.NewOAuth2WechatHandler(wechatService, handler, userService, logger)
-	v2 := ioc.InitWebServer(v, userHandler, articleHandler, oAuth2WechatHandler)
+	v2 := ioc.InitWebServer(v, userHandler, articleHandler)
 	interactiveDAO := dao.NewGORMInteractiveDAO(db)
 	interactiveCache := cache.NewInteractiveRedisCache(cmdable)
 	interactiveRepository := repository.NewCachedInteractiveRepository(interactiveDAO, logger, interactiveCache)
@@ -67,4 +65,4 @@ var thirdProvider = wire.NewSet(ioc.InitDB, ioc.InitRedis, ioc.InitSaramaClient,
 
 var eventProvider = wire.NewSet(ioc.NewConsumers, article4.NewInteractiveReadEventConsumer, samarax.NewSamaraxBaseHandler)
 
-var webProvider = wire.NewSet(ioc.InitWebServer, ioc.GinMiddlewares, jwtx.NewRedisHandler, user.NewUserHandler, article3.NewArticleHandler, wechat.NewOAuth2WechatHandler)
+var webProvider = wire.NewSet(ioc.InitWebServer, ioc.GinMiddlewares, jwtx.NewRedisHandler, user.NewUserHandler, article3.NewArticleHandler)

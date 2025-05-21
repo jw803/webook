@@ -18,12 +18,12 @@ type UserHandler struct {
 	svc         service.UserService
 	codeSvc     service.CodeService
 	passwordExp *regexp.Regexp
-	jwtx.Handler
+	jwtx.JWTHandler
 	l loggerx.Logger
 }
 
 func NewUserHandler(svc service.UserService,
-	codeSvc service.CodeService, jwtHdl jwtx.Handler, l loggerx.Logger) *UserHandler {
+	codeSvc service.CodeService, jwtHdl jwtx.JWTHandler, l loggerx.Logger) *UserHandler {
 	const (
 		passwordRegexPattern = `^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$`
 	)
@@ -32,7 +32,7 @@ func NewUserHandler(svc service.UserService,
 		svc:         svc,
 		passwordExp: passwordExp,
 		codeSvc:     codeSvc,
-		Handler:     jwtHdl,
+		JWTHandler:  jwtHdl,
 		l:           l,
 	}
 }

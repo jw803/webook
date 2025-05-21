@@ -10,7 +10,7 @@ import (
 	"github.com/jw803/webook/config"
 	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/internal/pkg/ginx"
-	"github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
+	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
 	"github.com/jw803/webook/pkg/errorx"
 	"github.com/jw803/webook/pkg/loggerx"
 )
@@ -21,14 +21,14 @@ type Claims struct {
 
 type JWTAuthzMiddlewareBuilder struct {
 	publicPaths sets.Set[string]
-	jwtx.Handler
+	jwtx.JWTHandler
 	l loggerx.Logger
 }
 
-func NewJWTAuthzHandler(jwtHandler jwtx.Handler, l loggerx.Logger) *JWTAuthzMiddlewareBuilder {
-	return &JWTAuthzMiddlewareBuilder{
+func NewJWTAuthzHandler(jwtHandler jwtx.JWTHandler, l loggerx.Logger) JWTAuthzMiddlewareBuilder {
+	return JWTAuthzMiddlewareBuilder{
 		publicPaths: hashset.New[string](),
-		Handler:     jwtHandler,
+		JWTHandler:  jwtHandler,
 		l:           l,
 	}
 }
