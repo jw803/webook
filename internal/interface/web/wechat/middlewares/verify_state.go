@@ -19,7 +19,7 @@ type VerifyStateMiddlewareBuilder struct {
 
 func NewVerifyStateMiddlewareBuilder(l loggerx.Logger) *VerifyStateMiddlewareBuilder {
 	return &VerifyStateMiddlewareBuilder{
-		key: []byte("k6CswdUm77WKcbM68UQUuxVsHSpTCwgB"),
+		key: def.StateKey(),
 		l:   l,
 	}
 }
@@ -42,6 +42,7 @@ func (b *VerifyStateMiddlewareBuilder) Build() gin.HandlerFunc {
 			b.l.P3(ctx, "failed to get cookie from context", loggerx.Error(err))
 			ginx.WriteResponse(ctx, errorx.WithCode(errcode.ErrCookieMissing, err.Error()), nil)
 			ctx.Abort()
+			return
 		}
 		var sc def.StateClaims
 		_, err = jwt.ParseWithClaims(ck, &sc, func(token *jwt.Token) (interface{}, error) {
@@ -51,6 +52,7 @@ func (b *VerifyStateMiddlewareBuilder) Build() gin.HandlerFunc {
 			b.l.P3(ctx, "failed to parse token", loggerx.Error(err))
 			ginx.WriteResponse(ctx, errorx.WithCode(errcode.ErrTokenInvalid, err.Error()), nil)
 			ctx.Abort()
+			return
 		}
 		if state != sc.State {
 			// state 不匹配，有人搞你
@@ -58,6 +60,7 @@ func (b *VerifyStateMiddlewareBuilder) Build() gin.HandlerFunc {
 				loggerx.String("cookie_state", sc.State))
 			ginx.WriteResponse(ctx, errorx.WithCode(errcode.ErrCookieMissing, "state mismatch"), nil)
 			ctx.Abort()
+			return
 		}
 		ctx.Next()
 	}

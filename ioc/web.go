@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/jw803/webook/config"
 	articlehdl "github.com/jw803/webook/internal/interface/web/article"
 	userhdl "github.com/jw803/webook/internal/interface/web/user"
 	"github.com/jw803/webook/internal/interface/web/wechat"
@@ -71,7 +72,13 @@ func corsHdl() gin.HandlerFunc {
 				// 你的开发环境
 				return true
 			}
-			return strings.Contains(origin, "yourcompany.com")
+			// 從 APP_ALLOWED_ORIGINS 讀取允許的網域清單（逗號分隔，需為完整 origin 精確比對）
+			for _, allowed := range strings.Split(config.Get().AppAllowedOrigins, ",") {
+				if allowed = strings.TrimSpace(allowed); allowed != "" && origin == allowed {
+					return true
+				}
+			}
+			return false
 		},
 		MaxAge: 12 * time.Hour,
 	})

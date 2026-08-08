@@ -25,12 +25,12 @@ func (s Service) Send(ctx context.Context, tpl string, args []string, numbers ..
 	cnt := 1
 	for err != nil && cnt < s.retryMax {
 		err = s.svc.Send(ctx, tpl, args, numbers...)
-		if err == nil {
-			return nil
-		}
 		cnt++
 	}
-	return errors.New("重试都失败了")
+	if err != nil {
+		return errors.New("重试都失败了")
+	}
+	return nil
 }
 
 // 设计并实现了一个高可用的短信平台

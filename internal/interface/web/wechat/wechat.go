@@ -2,6 +2,7 @@ package wechat
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/jw803/webook/internal/interface/web/wechat/def"
 	"github.com/jw803/webook/internal/interface/web/wechat/middlewares"
 	"github.com/jw803/webook/internal/pkg/ginx"
 	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
@@ -26,7 +27,7 @@ func NewOAuth2WechatHandler(svc wechat.Service,
 	return &OAuth2WechatHandler{
 		svc:             svc,
 		userSvc:         userSvc,
-		key:             []byte("k6CswdUm77WKcbM68UQUuxVsHSpTCwgB"),
+		key:             def.StateKey(),
 		stateCookieName: "jwt-state",
 		JWTHandler:      hdl,
 		l:               l,

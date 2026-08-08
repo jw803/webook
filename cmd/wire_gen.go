@@ -27,8 +27,8 @@ import (
 
 func InitApp() *App {
 	cmdable := ioc.InitRedis()
-	jwtHandler := jwtx.NewRedisHandler(cmdable)
 	logger := ioc.InitLogger()
+	jwtHandler := jwtx.NewRedisHandler(cmdable, logger)
 	v := ioc.GinMiddlewares(jwtHandler, logger)
 	db := ioc.InitDB()
 	nowFunc := ioc.NewNowFunc()

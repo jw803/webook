@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -9,16 +8,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-var defaultConfiguration []byte
-
 var env Env
 
 type Env struct {
-	AppEnv       string `mapstructure:"APP_ENV"`
-	AppRole      string `mapstructure:"APP_ROLE"`
-	AppDB        string `mapstructure:"APP_DB"`
-	AppRedis     string `mapstructure:"APP_REDIS"`
-	APPSecretKey string `mapstructure:"APP_SECRET_KEY"`
+	AppEnv             string `mapstructure:"APP_ENV"`
+	AppRole            string `mapstructure:"APP_ROLE"`
+	AppDB              string `mapstructure:"APP_DB"`
+	AppRedis           string `mapstructure:"APP_REDIS"`
+	APPSecretKey       string `mapstructure:"APP_SECRET_KEY"`
+	AppAllowedOrigins  string `mapstructure:"APP_ALLOWED_ORIGINS"`
+	JWTRefreshTokenKey string `mapstructure:"JWT_REFRESH_TOKEN_KEY"`
+	WechatStateKey     string `mapstructure:"WECHAT_STATE_KEY"`
 }
 
 func Get() *Env {
@@ -56,14 +56,13 @@ func loadFromEnvironmentVariables() {
 	_ = viper.BindEnv("APP_ENV")
 	_ = viper.BindEnv("APP_ROLE")
 	_ = viper.BindEnv("APP_DB")
-	_ = viper.BindEnv("APP_REDIS`")
-	_ = viper.BindEnv("APP_SECRET_KEY`")
+	_ = viper.BindEnv("APP_REDIS")
+	_ = viper.BindEnv("APP_SECRET_KEY")
+	_ = viper.BindEnv("APP_ALLOWED_ORIGINS")
+	_ = viper.BindEnv("JWT_REFRESH_TOKEN_KEY")
+	_ = viper.BindEnv("WECHAT_STATE_KEY")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	viper.AutomaticEnv()
-
-	if err := viper.ReadConfig(bytes.NewBuffer(defaultConfiguration)); err != nil {
-		panic(err)
-	}
 }
 
 func SetTestConfig() {

@@ -16,7 +16,7 @@ func (h *UserHandler) RefreshToken(ctx *gin.Context) (any, error) {
 	refreshToken := h.ExtractToken(ctx)
 	var rc jwtx.RefreshClaims
 	token, err := jwt.ParseWithClaims(refreshToken, &rc, func(token *jwt.Token) (interface{}, error) {
-		return jwtx.RtKey, nil
+		return jwtx.RtKey(), nil
 	})
 	if err != nil || !token.Valid {
 		h.l.P3(ctx, "invalid refresh token")

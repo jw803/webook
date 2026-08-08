@@ -27,8 +27,8 @@ import (
 //go:generate wire
 func InitWebServer() *gin.Engine {
 	cmdable := InitRedis()
-	handler := jwtx.NewRedisHandler(cmdable)
 	logger := ioc2.InitLog()
+	handler := jwtx.NewRedisHandler(cmdable, logger)
 	v := ioc.GinMiddlewares(handler, logger)
 	gormDB := InitTestDB()
 	userDAO := dao.NewGORMUserDAO(gormDB)

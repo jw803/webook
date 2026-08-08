@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jw803/webook/config"
 	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/pkg/errorx"
 	"github.com/jw803/webook/pkg/loggerx"
@@ -13,19 +14,36 @@ import (
 	"time"
 )
 
-var (
-	AtKey = []byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0")
-	RtKey = []byte("95osj3fUD7fo0mlYdDbncXz4VD2igvfx")
+// 只有在對應的環境變數（APP_SECRET_KEY / JWT_REFRESH_TOKEN_KEY）沒設定時才會用到，
+// 讓本地開發不必額外配置也能跑起來；正式環境務必透過環境變數覆蓋。
+const (
+	defaultAtKey = "95osj3fUD7fo0mlYdDbncXz4VD2igvf0"
+	defaultRtKey = "95osj3fUD7fo0mlYdDbncXz4VD2igvfx"
 )
+
+func AtKey() []byte {
+	if k := config.Get().APPSecretKey; k != "" {
+		return []byte(k)
+	}
+	return []byte(defaultAtKey)
+}
+
+func RtKey() []byte {
+	if k := config.Get().JWTRefreshTokenKey; k != "" {
+		return []byte(k)
+	}
+	return []byte(defaultRtKey)
+}
 
 type RedisJWTHandler struct {
 	cmd redis.Cmdable
 	l   loggerx.Logger
 }
 
-func NewRedisHandler(cmd redis.Cmdable) JWTHandler {
+func NewRedisHandler(cmd redis.Cmdable, l loggerx.Logger) JWTHandler {
 	return &RedisJWTHandler{
 		cmd: cmd,
+		l:   l,
 	}
 }
 
@@ -48,7 +66,7 @@ func (h *RedisJWTHandler) setRefreshToken(ctx *gin.Context, uid int64, ssid stri
 		Uid: uid,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenStr, err := token.SignedString(RtKey)
+	tokenStr, err := token.SignedString(RtKey())
 	if err != nil {
 		h.l.Error(ctx, "failed to sign jwt string", loggerx.Error(err))
 		return err
@@ -100,7 +118,7 @@ func (h *RedisJWTHandler) SetJWTToken(ctx *gin.Context, uid int64, ssid string) 
 		UserAgent: ctx.Request.UserAgent(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenStr, err := token.SignedString(AtKey)
+	tokenStr, err := token.SignedString(AtKey())
 	if err != nil {
 		h.l.Error(ctx, "failed to sign jwt string", loggerx.Error(err))
 		return err

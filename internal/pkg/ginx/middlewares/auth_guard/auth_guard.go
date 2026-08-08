@@ -7,7 +7,6 @@ import (
 	"github.com/emirpasic/gods/v2/sets/hashset"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/jw803/webook/config"
 	"github.com/jw803/webook/internal/pkg/errcode"
 	"github.com/jw803/webook/internal/pkg/ginx"
 	jwtx "github.com/jw803/webook/internal/pkg/ginx/jwt_handler"
@@ -50,7 +49,7 @@ func (b JWTAuthzMiddlewareBuilder) Build() gin.HandlerFunc {
 				b.l.P3(ctx, "invalid token")
 				return nil, fmt.Errorf("%w: %s", errors.New(""), token.Header["alg"])
 			}
-			return []byte(config.Get().APPSecretKey), nil
+			return jwtx.AtKey(), nil
 		})
 		if err != nil || !token.Valid {
 			ginx.WriteResponse(ctx, errorx.WithCode(errcode.ErrTokenInvalid, "invalid token"), "")

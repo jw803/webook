@@ -31,7 +31,7 @@ func InitUserhandler(userDAO dao.UserDAO) *user.UserHandler {
 	codeRepository := repository.NewCachedCodeRepository(codeCache)
 	smsService := ioc.InitSmsMemoryService(cmdable)
 	codeService := service.NewSMSCodeService(codeRepository, smsService)
-	jwtHandler := jwtx.NewRedisHandler(cmdable)
+	jwtHandler := jwtx.NewRedisHandler(cmdable, logger)
 	userHandler := user.NewUserHandler(userService, codeService, jwtHandler, logger)
 	return userHandler
 }

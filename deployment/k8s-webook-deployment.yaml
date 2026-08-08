@@ -21,3 +21,13 @@ spec:
           image: flycash/webook-live:v0.0.1
           ports:
             - containerPort: 8080
+          env:
+            - name: APP_ENV
+              value: "production"
+            - name: APP_ROLE
+              value: "webapi"
+          # 敏感設定（DB、Redis、JWT/OAuth 金鑰等）從 Secret 注入，
+          # 範本見 k8s-webook-secret.yaml；正式環境請用 kubectl / 密鑰管理服務建立，勿把填好真實值的檔案 commit 進 git。
+          envFrom:
+            - secretRef:
+                name: webook-secrets
